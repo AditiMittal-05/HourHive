@@ -128,9 +128,12 @@ Resubmitted
 * Leave Management Integration
 * Resource Planning
 * Project Costing
-* Mobile Application
-* Advanced Analytics
 
 ## 📄 License
 
 This project is developed for learning and organizational productivity management purposes.
+
+## Author
+Developed by Aditi Mittal
+* Mobile Application
+* Advanced Analytics
