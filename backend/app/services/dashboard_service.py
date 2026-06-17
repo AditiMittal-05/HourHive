@@ -1,0 +1,177 @@
+from datetime import date, timedelta
+from decimal import Decimal
+from sqlalchemy.orm import Session
+from sqlalchemy import func, extract
+from app.models.timesheet_header import TimesheetHeader, TimesheetStatus
+from app.models.timesheet_detail import TimesheetDetail
+from app.models.user import User, UserStatus
+from app.models.project import Project
+from app.schemas.dashboard import (
+    EmployeeDashboard, EmployeeKPIs, AdminDashboard, AdminKPIs,
+    WeeklyHoursData, RecentEntry, HeatmapDay, TopProject, PendingItem, ChartDataPoint,
+)
+
+
+class DashboardService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def get_employee_dashboard(self, employee_id: int) -> EmployeeDashboard:
+        today = date.today()
+        month_start = today.replace(day=1)
+
+        month_hours = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
+            TimesheetDetail.employee_id == employee_id,
+            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.is_deleted == False,
+        ).scalar() or Decimal("0")
+
+        def count_by_status(*statuses):
+            return self.db.query(func.count(TimesheetHeader.id)).filter(
+                TimesheetHeader.employee_id == employee_id,
+                TimesheetHeader.status.in_(statuses),
+                TimesheetHeader.is_deleted == False,
+            ).scalar() or 0
+
+        kpis = EmployeeKPIs(
+            current_month_hours=month_hours,
+            submitted_count=count_by_status(TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED),
+            pending_count=count_by_status(TimesheetStatus.DRAFT),
+            approved_count=count_by_status(TimesheetStatus.APPROVED),
+            rejected_count=count_by_status(TimesheetStatus.REJECTED),
+        )
+
+        # Last 8 weeks hours
+        weekly_hours = []
+        for i in range(7, -1, -1):
+            w_start = today - timedelta(weeks=i)
+            w_start = w_start - timedelta(days=w_start.weekday())
+            w_end = w_start + timedelta(days=6)
+            hrs = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
+                TimesheetDetail.employee_id == employee_id,
+                TimesheetDetail.work_date >= w_start,
+                TimesheetDetail.work_date <= w_end,
+                TimesheetDetail.is_deleted == False,
+            ).scalar() or 0
+            weekly_hours.append(WeeklyHoursData(week=w_start.strftime("%b %d"), hours=float(hrs)))
+
+        # Recent entries
+        from app.models.project import Project
+        from app.models.activity import Activity
+        recent_rows = self.db.query(
+            TimesheetDetail, Project.project_name, Activity.activity_name,
+            TimesheetHeader.status
+        ).join(Project, TimesheetDetail.project_id == Project.id)\
+         .join(Activity, TimesheetDetail.activity_id == Activity.id)\
+         .join(TimesheetHeader, TimesheetDetail.header_id == TimesheetHeader.id)\
+         .filter(
+            TimesheetDetail.employee_id == employee_id,
+            TimesheetDetail.is_deleted == False,
+        ).order_by(TimesheetDetail.work_date.desc()).limit(10).all()
+
+        recent_entries = [
+            RecentEntry(
+                work_date=str(r.TimesheetDetail.work_date),
+                project_name=r.project_name,
+                activity_name=r.activity_name,
+                hours_worked=float(r.TimesheetDetail.hours_worked),
+                status=r.status.value,
+            ) for r in recent_rows
+        ]
+
+        # Heatmap (current month)
+        heatmap_rows = self.db.query(
+            TimesheetDetail.work_date,
+            func.sum(TimesheetDetail.hours_worked).label("hours"),
+        ).filter(
+            TimesheetDetail.employee_id == employee_id,
+            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.is_deleted == False,
+        ).group_by(TimesheetDetail.work_date).all()
+        heatmap = [HeatmapDay(date=str(r.work_date), hours=float(r.hours)) for r in heatmap_rows]
+
+        return EmployeeDashboard(kpis=kpis, weekly_hours=weekly_hours,
+                                 recent_entries=recent_entries, heatmap=heatmap)
+
+    def get_admin_dashboard(self) -> AdminDashboard:
+        today = date.today()
+        month_start = today.replace(day=1)
+
+        pending = self.db.query(func.count(TimesheetHeader.id)).filter(
+            TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED]),
+            TimesheetHeader.is_deleted == False,
+        ).scalar() or 0
+
+        approved_month = self.db.query(func.count(TimesheetHeader.id)).filter(
+            TimesheetHeader.status == TimesheetStatus.APPROVED,
+            TimesheetHeader.approved_at >= month_start,
+            TimesheetHeader.is_deleted == False,
+        ).scalar() or 0
+
+        rejected_month = self.db.query(func.count(TimesheetHeader.id)).filter(
+            TimesheetHeader.status == TimesheetStatus.REJECTED,
+            TimesheetHeader.is_deleted == False,
+            TimesheetHeader.week_start_date >= month_start,
+        ).scalar() or 0
+
+        total_emp = self.db.query(func.count(User.id)).filter(
+            User.status == UserStatus.ACTIVE, User.is_deleted == False,
+        ).scalar() or 0
+
+        avg_hours = self.db.query(
+            func.avg(func.sum(TimesheetDetail.hours_worked))
+        ).filter(
+            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.is_deleted == False,
+        ).group_by(TimesheetDetail.employee_id).scalar() or Decimal("0")
+
+        kpis = AdminKPIs(
+            pending_approvals=pending,
+            approved_this_month=approved_month,
+            rejected_this_month=rejected_month,
+            missing_timesheets=0,
+            total_employees=total_emp,
+            avg_hours_per_employee=Decimal(str(round(float(avg_hours), 2))),
+        )
+
+        # Top projects
+        top_proj_rows = self.db.query(
+            Project.project_name,
+            func.sum(TimesheetDetail.hours_worked).label("total"),
+        ).join(TimesheetDetail, Project.id == TimesheetDetail.project_id)\
+         .filter(
+            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.is_deleted == False,
+        ).group_by(Project.project_name).order_by(func.sum(TimesheetDetail.hours_worked).desc()).limit(5).all()
+        top_projects = [TopProject(project_name=r.project_name, total_hours=float(r.total)) for r in top_proj_rows]
+
+        # Pending queue
+        pending_items_rows = self.db.query(TimesheetHeader).filter(
+            TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED]),
+            TimesheetHeader.is_deleted == False,
+        ).order_by(TimesheetHeader.submitted_at.asc()).limit(10).all()
+        pending_items = [
+            PendingItem(
+                header_id=h.id,
+                employee_name=h.employee.full_name if h.employee else "",
+                week_label=f"{h.week_start_date} – {h.week_end_date}",
+                total_hours=float(h.total_hours),
+                submitted_at=str(h.submitted_at) if h.submitted_at else None,
+            ) for h in pending_items_rows
+        ]
+
+        # Monthly hours chart (last 6 months)
+        monthly_chart = []
+        for i in range(5, -1, -1):
+            m = (today.month - i - 1) % 12 + 1
+            y = today.year if (today.month - i) > 0 else today.year - 1
+            hrs = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
+                extract("month", TimesheetDetail.work_date) == m,
+                extract("year", TimesheetDetail.work_date) == y,
+                TimesheetDetail.is_deleted == False,
+            ).scalar() or 0
+            import calendar
+            monthly_chart.append(ChartDataPoint(label=f"{calendar.month_abbr[m]} {y}", value=float(hrs)))
+
+        return AdminDashboard(kpis=kpis, top_projects=top_projects,
+                              pending_approvals=pending_items, monthly_hours_chart=monthly_chart)
