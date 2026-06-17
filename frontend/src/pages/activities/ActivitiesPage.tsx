@@ -114,9 +114,9 @@ export function ActivitiesPage() {
         </CardContent>
       </Card>
 
-      <ActivityFormDialog open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={(d) => createMutation.mutate(d)} loading={createMutation.isPending} title="Create Activity" />
+      <ActivityFormDialog open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={(d: any) => createMutation.mutate(d)} loading={createMutation.isPending} title="Create Activity" />
       {editActivity && (
-        <ActivityFormDialog open={!!editActivity} onClose={() => setEditActivity(null)} onSubmit={(d) => updateMutation.mutate({ id: editActivity.id, d })} loading={updateMutation.isPending} title="Edit Activity" defaultValues={editActivity} isEdit />
+        <ActivityFormDialog open={!!editActivity} onClose={() => setEditActivity(null)} onSubmit={(d: any) => updateMutation.mutate({ id: editActivity.id, d })} loading={updateMutation.isPending} title="Edit Activity" defaultValues={editActivity} isEdit />
       )}
     </div>
   );

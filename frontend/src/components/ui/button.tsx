@@ -4,24 +4,36 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold ring-offset-background transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "bg-primary text-white hover:bg-primary-600 shadow-sm",
-        secondary: "bg-secondary text-white hover:bg-secondary-600 shadow-sm",
-        destructive: "bg-danger text-white hover:bg-red-600 shadow-sm",
-        outline: "border border-border-color bg-white hover:bg-light-bg text-text-primary",
-        ghost: "hover:bg-light-bg text-text-secondary hover:text-text-primary",
-        link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-success text-white hover:bg-green-600 shadow-sm",
-        warning: "bg-warning text-white hover:bg-amber-600 shadow-sm",
+        default:
+          "bg-primary text-white hover:bg-primary-600 shadow-sm active:scale-[0.98]",
+        secondary:
+          "bg-secondary text-secondary-foreground hover:bg-secondary-500 shadow-sm active:scale-[0.98]",
+        destructive:
+          "bg-danger text-white hover:bg-red-600 shadow-sm active:scale-[0.98]",
+        outline:
+          "border border-border-color bg-white hover:bg-light-bg text-text-primary hover:border-primary/30",
+        ghost:
+          "hover:bg-light-bg text-text-secondary hover:text-text-primary",
+        link:
+          "text-primary underline-offset-4 hover:underline",
+        success:
+          "bg-success text-white hover:bg-green-600 shadow-sm active:scale-[0.98]",
+        warning:
+          "bg-warning text-white hover:bg-amber-600 shadow-sm active:scale-[0.98]",
+        "primary-outline":
+          "border border-primary/30 bg-primary-50 text-primary hover:bg-primary-100",
+        "accent":
+          "bg-secondary text-secondary-foreground hover:bg-secondary-500 shadow-sm font-semibold active:scale-[0.98]",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-11 rounded-lg px-8 text-base",
-        xl: "h-12 rounded-lg px-10 text-base",
+        lg: "h-11 rounded-lg px-7 text-base",
+        xl: "h-12 rounded-lg px-9 text-base",
         icon: "h-9 w-9",
       },
     },

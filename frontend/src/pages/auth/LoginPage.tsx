@@ -49,70 +49,97 @@ export function LoginPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-text-primary">Sign In</h2>
-        <p className="text-text-secondary text-sm mt-1">Enter your credentials to access HourHive</p>
+    <div className="p-8 sm:p-10">
+      {/* Header */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-text-primary tracking-tight">Welcome back</h2>
+        <p className="text-text-secondary text-sm mt-1.5">
+          Sign in to your HourHive account
+        </p>
       </div>
 
       <form onSubmit={handleSubmit((d) => loginMutation.mutate(d))} className="space-y-5">
+        {/* Email */}
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email" className="text-sm font-semibold text-text-primary">
+            Email Address
+          </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="email"
               type="email"
               placeholder="you@gnxtsystems.com"
-              className="pl-10"
+              className="pl-10 h-10"
               {...register("email")}
             />
           </div>
-          {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-xs text-danger flex items-center gap-1">
+              <span>⚠</span> {errors.email.message}
+            </p>
+          )}
         </div>
 
+        {/* Password */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-primary hover:underline font-medium">
+            <Label htmlFor="password" className="text-sm font-semibold text-text-primary">
+              Password
+            </Label>
+            <Link
+              to="/forgot-password"
+              className="text-xs font-semibold hover:underline"
+              style={{ color: "#0B2E59" }}
+            >
               Forgot password?
             </Link>
           </div>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="pl-10 pr-10"
+              className="pl-10 pr-10 h-10"
               {...register("password")}
             />
             <button
               type="button"
               onClick={() => setShowPassword((p) => !p)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors p-0.5"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="text-xs text-danger flex items-center gap-1">
+              <span>⚠</span> {errors.password.message}
+            </p>
+          )}
         </div>
 
-        <Button type="submit" className="w-full" size="lg" loading={loginMutation.isPending}>
+        {/* Submit */}
+        <Button
+          type="submit"
+          className="w-full h-11 text-sm font-semibold mt-2"
+          loading={loginMutation.isPending}
+        >
           <LogIn className="h-4 w-4" />
           Sign In to HourHive
         </Button>
       </form>
 
-      <div className="mt-6 pt-6 border-t border-border-color text-center space-y-2">
+      {/* Footer */}
+      <div className="mt-8 pt-6 border-t border-border-color space-y-3 text-center">
         <p className="text-sm text-text-secondary">
           Don't have an account?{" "}
-          <Link to="/register" className="text-primary hover:underline font-medium">
-            Sign up
+          <Link to="/register" className="font-semibold text-primary hover:underline">
+            Create one
           </Link>
         </p>
-        <p className="text-xs text-text-secondary">
-          Having trouble? Contact{" "}
+        <p className="text-xs text-text-secondary/70">
+          Need help? Contact{" "}
           <a href="mailto:admin@gnxtsystems.com" className="text-primary hover:underline font-medium">
             your administrator
           </a>

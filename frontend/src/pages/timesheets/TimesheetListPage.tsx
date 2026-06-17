@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Send, ChevronRight } from "lucide-react";
+import { Send, Plus, Clock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { SkeletonTable } from "@/components/shared/PageLoader";
 import { timesheetsService } from "@/services/timesheets.service";
@@ -25,60 +26,93 @@ export function TimesheetListPage() {
 
   const submitMutation = useMutation({
     mutationFn: (id: number) => timesheetsService.submitTimesheet(id),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["timesheets-list"] }); toast.success("Timesheet submitted for approval"); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["timesheets-list"] });
+      toast.success("Timesheet submitted for approval");
+    },
     onError: (e: any) => toast.error("Failed", e?.response?.data?.detail),
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">My Timesheets</h1>
-          <p className="text-text-secondary text-sm mt-0.5">Weekly timesheet submissions and status</p>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">My Timesheets</h1>
+          <p className="text-text-secondary text-sm mt-0.5">Weekly timesheet submissions and approval status</p>
         </div>
         <Button onClick={() => navigate("/timesheets/entry")}>
-          <ChevronRight className="h-4 w-4" /> Log Time
+          <Plus className="h-4 w-4" /> Log Time
         </Button>
       </div>
 
+      {/* Table card */}
       <Card>
         <CardContent className="p-0">
-          {isLoading ? <div className="p-6"><SkeletonTable /></div> : (
+          {isLoading ? (
+            <div className="p-6">
+              <SkeletonTable />
+            </div>
+          ) : (
             <>
-              <table className="w-full">
-                <thead className="bg-light-bg border-b border-border-color">
+              <table className="enterprise-table w-full">
+                <thead>
                   <tr>
-                    {["Week", "Total Hours", "Status", "Submitted", "Approved/Rejected", "Actions"].map((h) => (
-                      <th key={h} className="text-left text-xs font-semibold text-text-secondary px-5 py-3">{h}</th>
+                    {["Week Period", "Total Hours", "Status", "Submitted", "Approval", "Actions"].map((h) => (
+                      <th key={h}>{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border-color">
+                <tbody>
                   {(!data?.items || data.items.length === 0) ? (
                     <tr>
-                      <td colSpan={6} className="py-12 text-center text-text-secondary text-sm">No timesheets found</td>
+                      <td colSpan={6} className="py-16 text-center">
+                        <div className="w-12 h-12 rounded-xl bg-light-bg flex items-center justify-center mx-auto mb-3">
+                          <Clock className="h-5 w-5 text-slate-300" />
+                        </div>
+                        <p className="text-sm font-medium text-text-secondary">No timesheets found</p>
+                        <p className="text-xs text-text-secondary/60 mt-1">Start logging time to see your timesheets here</p>
+                      </td>
                     </tr>
                   ) : data.items.map((ts) => (
-                    <tr key={ts.id} className="hover:bg-light-bg transition-colors">
-                      <td className="px-5 py-3">
-                        <p className="text-sm font-medium text-text-primary">{ts.week_start_date} – {ts.week_end_date}</p>
+                    <tr key={ts.id}>
+                      <td>
+                        <p className="text-sm font-semibold text-text-primary">
+                          {ts.week_start_date} – {ts.week_end_date}
+                        </p>
                       </td>
-                      <td className="px-5 py-3 text-sm font-bold text-text-primary tabular-nums">{Number(ts.total_hours).toFixed(2)}h</td>
-                      <td className="px-5 py-3"><StatusBadge status={ts.status} /></td>
-                      <td className="px-5 py-3 text-xs text-text-secondary">
-                        {ts.submitted_at ? format(new Date(ts.submitted_at), "MMM d, yyyy HH:mm") : "—"}
+                      <td>
+                        <span className="text-sm font-bold text-text-primary tabular-nums">
+                          {Number(ts.total_hours).toFixed(2)}h
+                        </span>
                       </td>
-                      <td className="px-5 py-3 text-xs text-text-secondary">
-                        {ts.approved_at && <span className="text-success">{format(new Date(ts.approved_at), "MMM d, yyyy")}</span>}
+                      <td>
+                        <StatusBadge status={ts.status} />
+                      </td>
+                      <td className="text-xs text-text-secondary">
+                        {ts.submitted_at
+                          ? format(new Date(ts.submitted_at), "MMM d, yyyy HH:mm")
+                          : <span className="text-text-secondary/40">—</span>}
+                      </td>
+                      <td>
+                        {ts.approved_at && (
+                          <span className="text-xs font-semibold text-emerald-600">
+                            ✓ {format(new Date(ts.approved_at), "MMM d, yyyy")}
+                          </span>
+                        )}
                         {ts.rejection_reason && (
                           <div>
-                            <span className="text-danger">Rejected</span>
-                            <p className="text-text-secondary/70 mt-0.5 max-w-[200px] truncate">{ts.rejection_reason}</p>
+                            <span className="text-xs font-semibold text-danger">Rejected</span>
+                            <p className="text-xs text-text-secondary/70 mt-0.5 max-w-[180px] truncate">
+                              {ts.rejection_reason}
+                            </p>
                           </div>
                         )}
-                        {!ts.approved_at && !ts.rejection_reason && "—"}
+                        {!ts.approved_at && !ts.rejection_reason && (
+                          <span className="text-text-secondary/40 text-xs">—</span>
+                        )}
                       </td>
-                      <td className="px-5 py-3">
+                      <td>
                         {(ts.status === "draft" || ts.status === "rejected") && (
                           <Button
                             size="sm"
@@ -92,7 +126,7 @@ export function TimesheetListPage() {
                           <span className="text-xs text-text-secondary italic">Pending review</span>
                         )}
                         {ts.status === "approved" && (
-                          <span className="text-xs text-success font-medium">Locked ✓</span>
+                          <span className="text-xs font-semibold text-emerald-600">Locked ✓</span>
                         )}
                       </td>
                     </tr>
@@ -100,14 +134,20 @@ export function TimesheetListPage() {
                 </tbody>
               </table>
 
+              {/* Pagination */}
               {data && data.total > 10 && (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-border-color">
+                <div className="flex items-center justify-between px-5 py-3.5 border-t border-border-color">
                   <p className="text-sm text-text-secondary">
-                    Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, data.total)} of {data.total}
+                    Showing <span className="font-semibold text-text-primary">{(page - 1) * 10 + 1}–{Math.min(page * 10, data.total)}</span> of{" "}
+                    <span className="font-semibold text-text-primary">{data.total}</span>
                   </p>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-                    <Button size="sm" variant="outline" disabled={page * 10 >= data.total} onClick={() => setPage((p) => p + 1)}>Next</Button>
+                    <Button size="sm" variant="outline" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
+                      Previous
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={page * 10 >= data.total} onClick={() => setPage((p) => p + 1)}>
+                      Next
+                    </Button>
                   </div>
                 </div>
               )}

@@ -7,18 +7,30 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-white",
-        secondary: "border-transparent bg-secondary text-white",
-        outline: "border-border-color text-text-secondary",
-        destructive: "border-transparent bg-red-100 text-red-700",
-        success: "border-transparent bg-green-100 text-green-700",
-        warning: "border-transparent bg-amber-100 text-amber-700",
-        info: "border-transparent bg-blue-100 text-blue-700",
-        draft: "border-transparent bg-slate-100 text-slate-600",
-        submitted: "border-transparent bg-blue-100 text-blue-700",
-        approved: "border-transparent bg-green-100 text-green-700",
-        rejected: "border-transparent bg-red-100 text-red-700",
-        resubmitted: "border-transparent bg-amber-100 text-amber-700",
+        default:
+          "border-transparent bg-primary text-white",
+        secondary:
+          "border-transparent bg-secondary-100 text-secondary-700 border-secondary-100",
+        outline:
+          "border-border-color text-text-secondary bg-white",
+        destructive:
+          "border-transparent bg-red-50 text-red-700 border border-red-100",
+        success:
+          "border-transparent bg-emerald-50 text-emerald-700 border border-emerald-100",
+        warning:
+          "border-transparent bg-amber-50 text-amber-700 border border-amber-100",
+        info:
+          "border-transparent bg-blue-50 text-blue-700 border border-blue-100",
+        draft:
+          "border border-slate-200 bg-slate-50 text-slate-600",
+        submitted:
+          "border border-blue-100 bg-blue-50 text-blue-700",
+        approved:
+          "border border-emerald-100 bg-emerald-50 text-emerald-700",
+        rejected:
+          "border border-red-100 bg-red-50 text-red-700",
+        resubmitted:
+          "border border-amber-100 bg-amber-50 text-amber-700",
       },
     },
     defaultVariants: {

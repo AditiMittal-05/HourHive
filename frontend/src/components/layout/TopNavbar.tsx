@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Menu, Bell, Search, LogOut, Key, ChevronDown, User } from "lucide-react";
+import { Menu, Bell, Search, LogOut, Key, ChevronDown, ChevronRight } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/utils/cn";
 
@@ -30,6 +30,9 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
   const { user, logout } = useAuthStore();
 
   const pageTitle = breadcrumbMap[location.pathname] || "HourHive";
+  const initials = user?.full_name
+    ? user.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : "U";
 
   const handleLogout = () => {
     logout();
@@ -37,79 +40,114 @@ export function TopNavbar({ onMenuToggle }: TopNavbarProps) {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-border-color flex items-center px-6 gap-4 sticky top-0 z-30 shadow-sm">
-      {/* Menu toggle */}
-      <button onClick={onMenuToggle} className="text-text-secondary hover:text-primary transition-colors p-1 rounded-lg hover:bg-light-bg">
+    <header className="h-16 bg-white border-b border-border-color flex items-center px-5 gap-4 sticky top-0 z-30"
+      style={{ boxShadow: "0 1px 0 0 #E2E8F0" }}>
+
+      {/* Sidebar toggle */}
+      <button
+        onClick={onMenuToggle}
+        className="p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary-50 transition-colors flex-shrink-0"
+      >
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Breadcrumb / Page title */}
-      <div className="flex items-center gap-2 text-sm">
-        <span className="text-text-secondary">HourHive</span>
-        <ChevronDown className="h-3 w-3 text-text-secondary rotate-[-90deg]" />
-        <span className="font-semibold text-text-primary">{pageTitle}</span>
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-sm min-w-0">
+        <span className="text-text-secondary font-medium hidden sm:block">HourHive</span>
+        <ChevronRight className="h-3.5 w-3.5 text-text-secondary/50 hidden sm:block flex-shrink-0" />
+        <span className="font-semibold text-text-primary truncate">{pageTitle}</span>
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
       {/* Search */}
       <div className="relative hidden md:block">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search..."
-          className="pl-9 pr-4 h-9 w-56 rounded-lg border border-border-color bg-light-bg text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition-all focus:w-72"
+          className={cn(
+            "pl-9 pr-4 h-9 rounded-lg border border-border-color bg-light-bg text-sm text-text-primary",
+            "placeholder:text-text-secondary/70",
+            "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-white",
+            "transition-all duration-200",
+            "w-52 focus:w-72"
+          )}
         />
       </div>
 
-      {/* Notifications */}
-      <button className="relative p-2 text-text-secondary hover:text-primary rounded-lg hover:bg-light-bg transition-colors">
+      {/* Notification bell */}
+      <button className="relative p-2 rounded-lg text-text-secondary hover:text-primary hover:bg-primary-50 transition-colors flex-shrink-0">
         <Bell className="h-5 w-5" />
-        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger" />
+        <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger border-2 border-white" />
       </button>
 
-      {/* User dropdown */}
-      <div className="relative">
+      {/* User menu */}
+      <div className="relative flex-shrink-0">
         <button
           onClick={() => setMenuOpen((p) => !p)}
-          className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-light-bg transition-colors"
+          className="flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl hover:bg-light-bg transition-colors"
         >
-          <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <span className="text-sm font-bold text-primary">{user?.full_name?.charAt(0).toUpperCase()}</span>
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+            style={{ background: "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)" }}
+          >
+            {initials}
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-sm font-semibold text-text-primary leading-none">{user?.full_name}</p>
             <p className="text-xs text-text-secondary capitalize mt-0.5">{user?.role}</p>
           </div>
-          <ChevronDown className={cn("h-4 w-4 text-text-secondary transition-transform", menuOpen && "rotate-180")} />
+          <ChevronDown className={cn(
+            "h-3.5 w-3.5 text-text-secondary transition-transform duration-200",
+            menuOpen && "rotate-180"
+          )} />
         </button>
 
         {menuOpen && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-            <div className="absolute right-0 top-12 w-56 bg-white rounded-xl border border-border-color shadow-card-hover z-50 overflow-hidden animate-fade-in">
-              <div className="px-4 py-3 border-b border-border-color">
-                <p className="text-sm font-semibold text-text-primary">{user?.full_name}</p>
-                <p className="text-xs text-text-secondary mt-0.5">{user?.email}</p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium capitalize">
+            <div className="absolute right-0 top-12 w-60 bg-white rounded-xl border border-border-color z-50 overflow-hidden animate-scale-in"
+              style={{ boxShadow: "0 8px 32px -4px rgba(11, 46, 89, 0.18), 0 2px 8px -2px rgba(11, 46, 89, 0.08)" }}>
+
+              {/* User info header */}
+              <div className="px-4 py-3.5 border-b border-border-color bg-light-bg">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)" }}
+                  >
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">{user?.full_name}</p>
+                    <p className="text-xs text-text-secondary truncate">{user?.email}</p>
+                  </div>
+                </div>
+                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize"
+                  style={{ background: "rgba(167,206,57,0.12)", color: "#527A0F" }}>
                   {user?.role}
                 </span>
               </div>
-              <div className="py-1">
+
+              {/* Menu items */}
+              <div className="py-1.5">
                 <Link
                   to="/change-password"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-text-secondary hover:bg-light-bg hover:text-text-primary transition-colors"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-light-bg hover:text-text-primary transition-colors"
                 >
-                  <Key className="h-4 w-4" /> Change Password
+                  <Key className="h-4 w-4" />
+                  Change Password
                 </Link>
+                <div className="mx-3 my-1 h-px bg-border-color" />
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-danger hover:bg-red-50 transition-colors"
                 >
-                  <LogOut className="h-4 w-4" /> Sign Out
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
                 </button>
               </div>
             </div>

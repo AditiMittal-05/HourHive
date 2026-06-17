@@ -165,9 +165,9 @@ export function ProjectsPage() {
       </Card>
 
       {/* Create dialog */}
-      <ProjectFormDialog open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={(d) => createMutation.mutate(d)} loading={createMutation.isPending} title="Create Project" managers={managers || []} />
-      {editProject && (
-        <ProjectFormDialog open={!!editProject} onClose={() => setEditProject(null)} onSubmit={(d) => updateMutation.mutate({ id: editProject.id, d })} loading={updateMutation.isPending} title="Edit Project" managers={managers || []} defaultValues={editProject} isEdit />
+      <ProjectFormDialog open={createOpen} onClose={() => setCreateOpen(false)} onSubmit={(d: any) => createMutation.mutate(d)}
+      loading={createMutation.isPending} title="Create Project" managers={managers || []}/> {editProject && (<ProjectFormDialog open={!!editProject}
+      onClose={() => setEditProject(null)}onSubmit={(d: any) =>updateMutation.mutate({id: editProject.id,d,})}loading={updateMutation.isPending}title="Edit Project" managers={managers || []}defaultValues={editProject} isEdit/>
       )}
     </div>
   );

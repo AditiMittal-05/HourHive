@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle, Clock, Users, XCircle, TrendingUp, AlertTriangle, BarChart2 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 
@@ -10,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { dashboardService } from "@/services/dashboard.service";
 
-const COLORS = ["#0F4C81", "#00A86B", "#F59E0B", "#EF4444", "#8B5CF6"];
+const PIE_COLORS = ["#0B2E59", "#A7CE39", "#F59E0B", "#EF4444", "#8B5CF6"];
 
 export function AdminDashboard() {
   const navigate = useNavigate();
@@ -21,7 +24,7 @@ export function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
@@ -32,17 +35,18 @@ export function AdminDashboard() {
   const kpis = data?.kpis;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Admin Dashboard</h1>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Admin Dashboard</h1>
           <p className="text-text-secondary text-sm mt-0.5">{format(new Date(), "EEEE, MMMM d, yyyy")}</p>
         </div>
-        <Button onClick={() => navigate("/approvals")}>
-          <CheckCircle className="h-4 w-4" /> Review Approvals
+        <Button onClick={() => navigate("/approvals")} className="gap-2">
+          <CheckCircle className="h-4 w-4" />
+          Review Approvals
           {(kpis?.pending_approvals ?? 0) > 0 && (
-            <span className="ml-1.5 bg-white/20 text-white rounded-full px-2 py-0.5 text-xs font-bold">
+            <span className="ml-0.5 bg-secondary text-secondary-foreground rounded-full px-2 py-0.5 text-xs font-bold">
               {kpis!.pending_approvals}
             </span>
           )}
@@ -61,49 +65,103 @@ export function AdminDashboard() {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Monthly hours chart */}
+        {/* Monthly hours bar chart */}
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" /> Monthly Hours Overview
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <div className="w-7 h-7 rounded-lg bg-primary-50 flex items-center justify-center">
+                  <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                </div>
+                Monthly Hours Overview
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={data?.monthly_hours_chart || []}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
-                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <YAxis tick={{ fontSize: 11, fill: "#64748B" }} />
-                  <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} />
-                  <Bar dataKey="value" fill="#0F4C81" radius={[4, 4, 0, 0]} name="Hours" />
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart
+                  data={data?.monthly_hours_chart || []}
+                  margin={{ top: 5, right: 5, bottom: 0, left: -20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "#94A3B8" }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: 10,
+                      border: "1px solid #E2E8F0",
+                      fontSize: 12,
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                    }}
+                    cursor={{ fill: "rgba(11,46,89,0.04)" }}
+                  />
+                  <Bar
+                    dataKey="value"
+                    radius={[5, 5, 0, 0]}
+                    name="Hours"
+                    fill="#0B2E59"
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
           </Card>
         </div>
 
-        {/* Top projects pie */}
+        {/* Top projects donut */}
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart2 className="h-5 w-5 text-secondary" /> Top Projects
+          <CardHeader className="pb-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <div className="w-7 h-7 rounded-lg bg-secondary-50 flex items-center justify-center">
+                <BarChart2 className="h-3.5 w-3.5 text-secondary-600" />
+              </div>
+              Top Projects
             </CardTitle>
           </CardHeader>
           <CardContent>
             {(data?.top_projects?.length ?? 0) === 0 ? (
               <div className="py-12 text-center">
-                <BarChart2 className="h-10 w-10 text-slate-200 mx-auto mb-2" />
+                <div className="w-10 h-10 rounded-xl bg-light-bg flex items-center justify-center mx-auto mb-3">
+                  <BarChart2 className="h-5 w-5 text-slate-300" />
+                </div>
                 <p className="text-sm text-text-secondary">No data yet</p>
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <PieChart>
-                  <Pie data={data!.top_projects} dataKey="total_hours" nameKey="project_name" cx="50%" cy="50%" outerRadius={80} label={false}>
-                    {data!.top_projects.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                  <Pie
+                    data={data!.top_projects}
+                    dataKey="total_hours"
+                    nameKey="project_name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={75}
+                    label={false}
+                    strokeWidth={2}
+                  >
+                    {data!.top_projects.map((_, i) => (
+                      <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    ))}
                   </Pie>
-                  <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-text-secondary">{v}</span>} />
-                  <Tooltip formatter={(v: number) => [`${v.toFixed(1)}h`, "Hours"]} />
+                  <Legend
+                    iconType="circle"
+                    iconSize={7}
+                    formatter={(v) => (
+                      <span className="text-xs text-text-secondary">{v}</span>
+                    )}
+                  />
+                  <Tooltip
+                    formatter={(v: number) => [`${v.toFixed(1)}h`, "Hours"]}
+                    contentStyle={{ borderRadius: 8, fontSize: 12 }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             )}
@@ -113,35 +171,55 @@ export function AdminDashboard() {
 
       {/* Pending approvals table */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-warning" /> Pending Approvals
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+              <AlertTriangle className="h-3.5 w-3.5 text-warning" />
+            </div>
+            Pending Approvals
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={() => navigate("/approvals")}>View All</Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/approvals")}>
+            View All
+          </Button>
         </CardHeader>
         <CardContent className="p-0">
           {(!data?.pending_approvals || data.pending_approvals.length === 0) ? (
             <div className="py-12 text-center">
-              <CheckCircle className="h-10 w-10 text-green-200 mx-auto mb-2" />
-              <p className="text-sm text-text-secondary">All timesheets reviewed!</p>
+              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                <CheckCircle className="h-5 w-5 text-emerald-400" />
+              </div>
+              <p className="text-sm font-medium text-text-secondary">All timesheets reviewed!</p>
+              <p className="text-xs text-text-secondary/60 mt-1">No pending approvals at this time</p>
             </div>
           ) : (
-            <table className="w-full">
-              <thead className="bg-light-bg border-b border-border-color">
+            <table className="enterprise-table w-full">
+              <thead>
                 <tr>
                   {["Employee", "Week", "Total Hours", "Submitted", "Action"].map((h) => (
-                    <th key={h} className="text-left text-xs font-semibold text-text-secondary px-6 py-3">{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-color">
+              <tbody>
                 {data.pending_approvals.map((item) => (
-                  <tr key={item.header_id} className="hover:bg-light-bg transition-colors">
-                    <td className="px-6 py-3 text-sm font-medium text-text-primary">{item.employee_name}</td>
-                    <td className="px-6 py-3 text-sm text-text-secondary">{item.week_label}</td>
-                    <td className="px-6 py-3 text-sm font-bold text-text-primary tabular-nums">{item.total_hours}h</td>
-                    <td className="px-6 py-3 text-xs text-text-secondary">{item.submitted_at ? new Date(item.submitted_at).toLocaleDateString() : "—"}</td>
-                    <td className="px-6 py-3">
+                  <tr key={item.header_id}>
+                    <td>
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                          style={{ background: "linear-gradient(135deg, #0B2E59, #123D72)" }}
+                        >
+                          {(item.employee_name || "U").charAt(0)}
+                        </div>
+                        <span className="text-sm font-medium text-text-primary">{item.employee_name}</span>
+                      </div>
+                    </td>
+                    <td className="text-sm text-text-secondary">{item.week_label}</td>
+                    <td className="text-sm font-bold text-text-primary tabular-nums">{item.total_hours}h</td>
+                    <td className="text-xs text-text-secondary">
+                      {item.submitted_at ? new Date(item.submitted_at).toLocaleDateString() : "—"}
+                    </td>
+                    <td>
                       <Button size="sm" onClick={() => navigate("/approvals")}>Review</Button>
                     </td>
                   </tr>

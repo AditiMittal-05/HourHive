@@ -57,52 +57,68 @@ export function RegisterPage() {
   });
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-text-primary">Create Account</h2>
-        <p className="text-text-secondary text-sm mt-1">Sign up to get started with HourHive</p>
+    <div className="p-8 sm:p-10">
+      {/* Header */}
+      <div className="mb-7">
+        <h2 className="text-2xl font-bold text-text-primary tracking-tight">Create account</h2>
+        <p className="text-text-secondary text-sm mt-1.5">
+          Join your team on HourHive
+        </p>
       </div>
 
       <form onSubmit={handleSubmit((d) => registerMutation.mutate(d))} className="space-y-4">
+        {/* Full Name */}
         <div className="space-y-1.5">
-          <Label htmlFor="full_name">Full Name</Label>
+          <Label htmlFor="full_name" className="text-sm font-semibold text-text-primary">
+            Full Name
+          </Label>
           <div className="relative">
-            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="full_name"
               type="text"
               placeholder="John Doe"
-              className="pl-10"
+              className="pl-10 h-10"
               {...register("full_name")}
             />
           </div>
-          {errors.full_name && <p className="text-xs text-danger">{errors.full_name.message}</p>}
+          {errors.full_name && (
+            <p className="text-xs text-danger">⚠ {errors.full_name.message}</p>
+          )}
         </div>
 
+        {/* Email */}
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email Address</Label>
+          <Label htmlFor="email" className="text-sm font-semibold text-text-primary">
+            Work Email
+          </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="email"
               type="email"
               placeholder="you@gnxtsystems.com"
-              className="pl-10"
+              className="pl-10 h-10"
               {...register("email")}
             />
           </div>
-          {errors.email && <p className="text-xs text-danger">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="text-xs text-danger">⚠ {errors.email.message}</p>
+          )}
         </div>
 
+        {/* Password */}
         <div className="space-y-1.5">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password" className="text-sm font-semibold text-text-primary">
+            Password
+          </Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
               placeholder="Min. 8 characters"
-              className="pl-10 pr-10"
+              className="pl-10 pr-10 h-10"
               {...register("password")}
             />
             <button
@@ -113,18 +129,23 @@ export function RegisterPage() {
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.password && <p className="text-xs text-danger">{errors.password.message}</p>}
+          {errors.password && (
+            <p className="text-xs text-danger">⚠ {errors.password.message}</p>
+          )}
         </div>
 
+        {/* Confirm Password */}
         <div className="space-y-1.5">
-          <Label htmlFor="confirm_password">Confirm Password</Label>
+          <Label htmlFor="confirm_password" className="text-sm font-semibold text-text-primary">
+            Confirm Password
+          </Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary pointer-events-none" />
             <Input
               id="confirm_password"
               type={showConfirm ? "text" : "password"}
               placeholder="Re-enter your password"
-              className="pl-10 pr-10"
+              className="pl-10 pr-10 h-10"
               {...register("confirm_password")}
             />
             <button
@@ -135,19 +156,27 @@ export function RegisterPage() {
               {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
-          {errors.confirm_password && <p className="text-xs text-danger">{errors.confirm_password.message}</p>}
+          {errors.confirm_password && (
+            <p className="text-xs text-danger">⚠ {errors.confirm_password.message}</p>
+          )}
         </div>
 
-        <Button type="submit" className="w-full" size="lg" loading={registerMutation.isPending}>
+        {/* Submit */}
+        <Button
+          type="submit"
+          className="w-full h-11 text-sm font-semibold mt-1"
+          loading={registerMutation.isPending}
+        >
           <UserPlus className="h-4 w-4" />
           Create Account
         </Button>
       </form>
 
-      <div className="mt-6 pt-6 border-t border-border-color text-center">
+      {/* Footer */}
+      <div className="mt-6 pt-5 border-t border-border-color text-center">
         <p className="text-sm text-text-secondary">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary hover:underline font-medium">
+          <Link to="/login" className="font-semibold text-primary hover:underline">
             Sign in
           </Link>
         </p>
