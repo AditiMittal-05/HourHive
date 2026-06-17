@@ -133,7 +133,7 @@ Resubmitted
 
 This project is developed for learning and organizational productivity management purposes.
 
-# TimeSheet
-Hour Hive by Aditi
+## Author
+Developed by Aditi Mittal
 * Mobile Application
 * Advanced Analytics
