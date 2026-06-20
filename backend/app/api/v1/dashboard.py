@@ -21,7 +21,7 @@ def employee_dashboard(
 
 @router.get("/admin", response_model=AdminDashboard)
 def admin_dashboard(
-    _=Depends(require_admin()),
+    current_user=Depends(require_admin()),
     db: Session = Depends(get_db),
 ):
     return DashboardService(db).get_admin_dashboard()

@@ -19,8 +19,11 @@ class UserRepository(BaseRepository[User]):
         return self.db.query(User).filter(User.id == id, User.is_deleted == False, User.status == UserStatus.ACTIVE).first()
 
     def search(self, search: str = None, role: UserRole = None, status: UserStatus = None,
-               page: int = 1, page_size: int = 20) -> Tuple[List[User], int]:
+               page: int = 1, page_size: int = 20,
+               exclude_super_admin: bool = False) -> Tuple[List[User], int]:
         q = self.db.query(User).filter(User.is_deleted == False)
+        if exclude_super_admin:
+            q = q.filter(User.role != UserRole.SUPER_ADMIN)
         if search:
             q = q.filter(or_(
                 User.full_name.ilike(f"%{search}%"),

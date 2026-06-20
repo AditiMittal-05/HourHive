@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Menu, Bell, Search, LogOut, Key, ChevronDown, ChevronRight } from "lucide-react";
+import { Menu, Bell, Search, LogOut, Key, ChevronDown, ChevronRight, Shield } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/utils/cn";
 
@@ -16,6 +16,13 @@ const breadcrumbMap = {
   "/reports": "Reports",
   "/analytics": "Analytics",
   "/change-password": "Change Password",
+  "/audit-logs": "Audit Logs",
+};
+
+const ROLE_COLORS = {
+  super_admin: { bg: "rgba(217,119,6,0.12)", color: "#92400E", label: "Super Admin" },
+  admin: { bg: "rgba(11,46,89,0.1)", color: "#0B2E59", label: "Admin" },
+  employee: { bg: "rgba(167,206,57,0.12)", color: "#527A0F", label: "Employee" },
 };
 
 export function TopNavbar({ onMenuToggle }) {
@@ -29,6 +36,8 @@ export function TopNavbar({ onMenuToggle }) {
   const initials = user?.full_name
     ? user.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : "U";
+  const roleStyle = ROLE_COLORS[user?.role] || ROLE_COLORS.employee;
+  const isSuperAdmin = user?.role === "super_admin";
 
   const handleLogout = () => {
     logout();
@@ -87,13 +96,17 @@ export function TopNavbar({ onMenuToggle }) {
         >
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)" }}
+            style={{
+              background: isSuperAdmin
+                ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                : "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)"
+            }}
           >
             {initials}
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-sm font-semibold text-text-primary leading-none">{user?.full_name}</p>
-            <p className="text-xs text-text-secondary capitalize mt-0.5">{user?.role}</p>
+            <p className="text-xs mt-0.5" style={{ color: roleStyle.color }}>{roleStyle.label}</p>
           </div>
           <ChevronDown className={cn(
             "h-3.5 w-3.5 text-text-secondary transition-transform duration-200",
@@ -112,7 +125,11 @@ export function TopNavbar({ onMenuToggle }) {
                 <div className="flex items-center gap-3">
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
-                    style={{ background: "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)" }}
+                    style={{
+                      background: isSuperAdmin
+                        ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                        : "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)"
+                    }}
                   >
                     {initials}
                   </div>
@@ -121,9 +138,12 @@ export function TopNavbar({ onMenuToggle }) {
                     <p className="text-xs text-text-secondary truncate">{user?.email}</p>
                   </div>
                 </div>
-                <span className="inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize"
-                  style={{ background: "rgba(167,206,57,0.12)", color: "#527A0F" }}>
-                  {user?.role}
+                <span
+                  className="inline-flex items-center gap-1 mt-2 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  style={{ background: roleStyle.bg, color: roleStyle.color }}
+                >
+                  {isSuperAdmin && <Shield className="h-3 w-3" />}
+                  {roleStyle.label}
                 </span>
               </div>
 
@@ -137,6 +157,16 @@ export function TopNavbar({ onMenuToggle }) {
                   <Key className="h-4 w-4" />
                   Change Password
                 </Link>
+                {isSuperAdmin && (
+                  <Link
+                    to="/audit-logs"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-secondary hover:bg-light-bg hover:text-text-primary transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    Audit Logs
+                  </Link>
+                )}
                 <div className="mx-3 my-1 h-px bg-border-color" />
                 <button
                   onClick={handleLogout}

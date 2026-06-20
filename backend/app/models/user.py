@@ -6,8 +6,9 @@ from app.models.base_model import AuditMixin
 
 
 class UserRole(str, enum.Enum):
-    EMPLOYEE = "employee"
+    SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
+    EMPLOYEE = "employee"
 
 
 class UserStatus(str, enum.Enum):

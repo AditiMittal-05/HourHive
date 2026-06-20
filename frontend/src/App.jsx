@@ -24,11 +24,17 @@ import { TimesheetListPage } from "@/pages/timesheets/TimesheetListPage";
 import { ApprovalsPage } from "@/pages/approvals/ApprovalsPage";
 import { ReportsPage } from "@/pages/reports/ReportsPage";
 import { AnalyticsPage } from "@/pages/reports/AnalyticsPage";
+import { AuditLogsPage } from "@/pages/audit/AuditLogsPage";
 
-function ProtectedRoute({ children, adminOnly = false }) {
+const ADMIN_ROLES = ["admin", "super_admin"];
+
+function ProtectedRoute({ children, adminOnly = false, superAdminOnly = false }) {
   const { isAuthenticated, user } = useAuthStore();
   if (!isAuthenticated) return <Navigate to="/login" replace />;
-  if (adminOnly && user?.role !== "admin") return <Navigate to="/dashboard" replace />;
+  if (superAdminOnly && user?.role !== "super_admin")
+    return <Navigate to="/dashboard" replace />;
+  if (adminOnly && !ADMIN_ROLES.includes(user?.role))
+    return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 }
 
@@ -52,18 +58,23 @@ export default function App() {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
 
-          {/* Timesheets */}
+          {/* Timesheets — all authenticated users */}
           <Route path="/timesheets" element={<TimesheetListPage />} />
           <Route path="/timesheets/entry" element={<TimesheetEntryPage />} />
           <Route path="/timesheets/weekly" element={<WeeklyViewPage />} />
 
-          {/* Admin Only */}
+          {/* Admin + SuperAdmin */}
           <Route path="/users" element={<ProtectedRoute adminOnly><UsersPage /></ProtectedRoute>} />
-          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects" element={<ProtectedRoute adminOnly><ProjectsPage /></ProtectedRoute>} />
           <Route path="/activities" element={<ProtectedRoute adminOnly><ActivitiesPage /></ProtectedRoute>} />
           <Route path="/approvals" element={<ProtectedRoute adminOnly><ApprovalsPage /></ProtectedRoute>} />
+
+          {/* Reports — all authenticated users */}
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
+
+          {/* SuperAdmin only */}
+          <Route path="/audit-logs" element={<ProtectedRoute superAdminOnly><AuditLogsPage /></ProtectedRoute>} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

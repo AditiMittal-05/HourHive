@@ -1,10 +1,11 @@
+import math
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from app.database.session import get_db
 from app.api.deps import get_current_active_user
-from app.core.permissions import require_admin
+from app.core.permissions import require_admin, require_super_admin
 from app.schemas.user import UserCreate, UserUpdate, UserResponse, UserDropdown
 from app.schemas.common import PaginatedResponse
 from app.services.user_service import UserService
@@ -20,15 +21,22 @@ def list_users(
     status: Optional[UserStatus] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    _=Depends(require_admin()),
+    current_user=Depends(require_admin()),
     db: Session = Depends(get_db),
 ):
-    items, total = UserService(db).search(search, role, status, page, page_size)
+    # Admin only sees employees; SuperAdmin sees all (excluding super_admin themselves)
+    exclude_super = current_user.role != UserRole.SUPER_ADMIN
+    if current_user.role == UserRole.ADMIN and role == UserRole.ADMIN:
+        # Admin cannot filter to see other admins
+        role = UserRole.EMPLOYEE
+    items, total = UserService(db).search(search, role, status, page, page_size,
+                                          exclude_super_admin=exclude_super)
     return PaginatedResponse(
         items=[UserResponse.model_validate(u) for u in items],
         total=total,
         page=page,
         page_size=page_size,
+        total_pages=math.ceil(total / page_size) if page_size else 1,
     )
 
 
@@ -38,7 +46,7 @@ def create_user(
     current_user=Depends(require_admin()),
     db: Session = Depends(get_db),
 ):
-    user, _ = UserService(db).create(body, created_by=current_user.id)
+    user, _ = UserService(db).create(body, created_by=current_user.id, actor_role=current_user.role)
     return user
 
 
@@ -53,7 +61,7 @@ def user_dropdown(
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: int,
-    _=Depends(require_admin()),
+    current_user=Depends(require_admin()),
     db: Session = Depends(get_db),
 ):
     return UserService(db).get_detail(user_id)
@@ -66,7 +74,7 @@ def update_user(
     current_user=Depends(require_admin()),
     db: Session = Depends(get_db),
 ):
-    return UserService(db).update(user_id, body, updated_by=current_user.id)
+    return UserService(db).update(user_id, body, updated_by=current_user.id, actor_role=current_user.role)
 
 
 @router.patch("/{user_id}/deactivate")

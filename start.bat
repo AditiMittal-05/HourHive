@@ -2,53 +2,36 @@
 title HourHive Launcher
 color 0A
 
-set ROOT=%~dp0
-set BACKEND=%ROOT%backend
-set FRONTEND=%ROOT%frontend
-set PYTHON=C:\Users\dell_1\AppData\Local\Programs\Python\Python312\python.exe
-set VENV=%BACKEND%\venv\Scripts
-
 echo.
-echo  HourHive - gNxt Systems
-echo  Starting backend and frontend...
+echo  ==========================================
+echo   HourHive - gNxt Systems
+echo   Starting backend and frontend...
+echo  ==========================================
 echo.
 
-:: ── First-time setup (skipped automatically if already done) ──────────────────
+echo [1/2] Opening Backend Server...
+start "HourHive - BACKEND - Port 8000" cmd /k "%~dp0start_backend.bat"
 
-if not exist "%BACKEND%\venv" (
-    echo  [SETUP] Creating Python venv...
-    "%PYTHON%" -m venv "%BACKEND%\venv"
-)
+echo Waiting 8 seconds for backend to initialize...
+timeout /t 8 /nobreak >nul
 
-if not exist "%VENV%\uvicorn.exe" (
-    echo  [SETUP] Installing Python packages (first run only)...
-    "%VENV%\pip.exe" install -r "%BACKEND%\requirements.txt" -q --disable-pip-version-check
-)
+echo [2/2] Opening Frontend...
+start "HourHive - FRONTEND - Port 5173" cmd /k "%~dp0start_frontend.bat"
 
-"%VENV%\python.exe" -c "import pymysql;c=pymysql.connect(host='localhost',user='root',password='root',port=3306);c.cursor().execute('CREATE DATABASE IF NOT EXISTS hourhive CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');c.commit();c.close()" 2>nul
-
-cd /d "%BACKEND%"
-"%VENV%\python.exe" -m alembic upgrade head >nul 2>&1
-
-if not exist "%FRONTEND%\node_modules" (
-    echo  [SETUP] Installing npm packages (first run only)...
-    cd /d "%FRONTEND%"
-    npm install --silent
-)
-
-:: ── Launch both servers in separate terminals ─────────────────────────────────
-
-start "HourHive  |  BACKEND  :8000" cmd /k "color 0B && echo. && echo  BACKEND  ^|  http://localhost:8000 && echo  API Docs ^|  http://localhost:8000/docs && echo. && cd /d "%BACKEND%" && call venv\Scripts\activate.bat && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
-
-timeout /t 2 /nobreak >nul
-
-start "HourHive  |  FRONTEND  :5173" cmd /k "color 0E && echo. && echo  FRONTEND ^|  http://localhost:5173 && echo. && cd /d "%FRONTEND%" && npm run dev"
-
-echo  Backend  ^>  http://localhost:8000
-echo  Frontend ^>  http://localhost:5173
-echo  API Docs ^>  http://localhost:8000/docs
 echo.
-echo  Both servers are running in their own windows.
-echo  Press any key to close this launcher.
+echo ==========================================
+echo   Both windows are now opening.
 echo.
-pause >nul
+echo   Once the frontend window shows:
+echo     VITE ready in ... ms
+echo   Then open: http://localhost:5173
+echo.
+echo   API Docs: http://localhost:8000/docs
+echo.
+echo   Keep BOTH black windows open while using.
+echo   To stop: close both black windows.
+echo ==========================================
+echo.
+echo Waiting 30 seconds then auto-opening browser...
+timeout /t 30 /nobreak >nul
+start "" "http://localhost:5173"

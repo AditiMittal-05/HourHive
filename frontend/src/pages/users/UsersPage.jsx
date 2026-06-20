@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, UserCheck, UserX, Edit } from "lucide-react";
+import { Plus, Search, UserCheck, UserX, Edit, Shield } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,22 +15,18 @@ import { SkeletonTable } from "@/components/shared/PageLoader";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useAuthStore } from "@/store/auth.store";
 
-const createSchema = z.object({
-  employee_code: z.string().min(1),
-  full_name: z.string().min(2),
-  email: z.string().email(),
-  role: z.enum(["employee", "admin"]),
-  department: z.string().optional(),
-  designation: z.string().optional(),
-  phone: z.string().optional(),
-});
-
-const updateSchema = createSchema.partial().extend({
-  status: z.enum(["active", "inactive"]).optional(),
-});
+const ROLE_BADGE = {
+  super_admin: { label: "Super Admin", style: { background: "rgba(217,119,6,0.1)", color: "#92400E", border: "1px solid rgba(217,119,6,0.2)" } },
+  admin: { label: "Admin", style: { background: "rgba(11,46,89,0.08)", color: "#0B2E59", border: "1px solid rgba(11,46,89,0.2)" } },
+  employee: { label: "Employee", style: { background: "rgba(100,116,139,0.08)", color: "#475569", border: "1px solid rgba(100,116,139,0.2)" } },
+};
 
 export function UsersPage() {
+  const currentUser = useAuthStore((s) => s.user);
+  const isSuperAdmin = currentUser?.role === "super_admin";
+
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -42,7 +38,13 @@ export function UsersPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ["users", search, roleFilter, statusFilter, page],
-    queryFn: () => usersService.list({ search, role: roleFilter || undefined, status: statusFilter || undefined, page, page_size: 15 }),
+    queryFn: () => usersService.list({
+      search,
+      role: roleFilter || undefined,
+      status: statusFilter || undefined,
+      page,
+      page_size: 15,
+    }),
     placeholderData: (prev) => prev,
   });
 
@@ -62,7 +64,10 @@ export function UsersPage() {
     mutationFn: ({ id, active }) =>
       active ? usersService.activate(id) : usersService.deactivate(id),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); toast.success("Status updated"); },
+    onError: (e) => toast.error("Failed", e?.response?.data?.detail || "Cannot modify this user"),
   });
+
+  const canActOn = (user) => user.role !== "super_admin";
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -70,7 +75,9 @@ export function UsersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">User Management</h1>
-          <p className="text-text-secondary text-sm mt-0.5">Manage team members and access permissions</p>
+          <p className="text-text-secondary text-sm mt-0.5">
+            {isSuperAdmin ? "Full access — manage admins and employees" : "Manage employees"}
+          </p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" /> Add User
@@ -94,8 +101,8 @@ export function UsersPage() {
               <SelectTrigger className="w-36"><SelectValue placeholder="All Roles" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Roles</SelectItem>
+                {isSuperAdmin && <SelectItem value="admin">Admin</SelectItem>}
                 <SelectItem value="employee">Employee</SelectItem>
-                <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
             <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
@@ -130,66 +137,80 @@ export function UsersPage() {
                     <tr>
                       <td colSpan={7} className="py-12 text-center text-text-secondary text-sm">No users found</td>
                     </tr>
-                  ) : data.items.map((user) => (
-                    <tr key={user.id}>
-                      <td className="text-sm font-mono text-text-secondary">{user.employee_code}</td>
-                      <td>
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #0B2E59, #123D72)" }}
-                          >
-                            {user.full_name.charAt(0).toUpperCase()}
+                  ) : data.items.map((user) => {
+                    const roleInfo = ROLE_BADGE[user.role] || ROLE_BADGE.employee;
+                    const isProtected = user.role === "super_admin";
+                    return (
+                      <tr key={user.id}>
+                        <td className="text-sm font-mono text-text-secondary">{user.employee_code}</td>
+                        <td>
+                          <div className="flex items-center gap-2.5">
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                              style={{
+                                background: isProtected
+                                  ? "linear-gradient(135deg, #D97706, #B45309)"
+                                  : "linear-gradient(135deg, #0B2E59, #123D72)"
+                              }}
+                            >
+                              {user.full_name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
+                                {user.full_name}
+                                {isProtected && <Shield className="h-3.5 w-3.5" style={{ color: "#D97706" }} />}
+                              </p>
+                              {user.designation && (
+                                <p className="text-xs text-text-secondary">{user.designation}</p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-semibold text-text-primary">{user.full_name}</p>
-                            {user.designation && (
-                              <p className="text-xs text-text-secondary">{user.designation}</p>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="text-sm text-text-secondary">{user.email}</td>
-                      <td className="text-sm text-text-secondary">{user.department || <span className="text-text-secondary/40">—</span>}</td>
-                      <td>
-                        <Badge
-                          variant={user.role === "admin" ? "default" : "outline"}
-                          className="capitalize font-semibold"
-                        >
-                          {user.role}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Badge variant={user.status === "active" ? "success" : "destructive"} className="capitalize">
-                          {user.status}
-                        </Badge>
-                      </td>
-                      <td>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => setEditUser(user)}
-                            title="Edit"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            onClick={() => toggleStatus.mutate({ id: user.id, active: user.status === "inactive" })}
-                            title={user.status === "active" ? "Deactivate" : "Activate"}
-                          >
-                            {user.status === "active"
-                              ? <UserX className="h-3.5 w-3.5 text-danger" />
-                              : <UserCheck className="h-3.5 w-3.5 text-emerald-600" />}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="text-sm text-text-secondary">{user.email}</td>
+                        <td className="text-sm text-text-secondary">{user.department || <span className="text-text-secondary/40">—</span>}</td>
+                        <td>
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                            style={roleInfo.style}>
+                            {isProtected && <Shield className="h-3 w-3" />}
+                            {roleInfo.label}
+                          </span>
+                        </td>
+                        <td>
+                          <Badge variant={user.status === "active" ? "success" : "destructive"} className="capitalize">
+                            {user.status}
+                          </Badge>
+                        </td>
+                        <td>
+                          {isProtected ? (
+                            <span className="text-xs text-text-secondary/50 px-1">Protected</span>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => setEditUser(user)}
+                                title="Edit"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => toggleStatus.mutate({ id: user.id, active: user.status === "inactive" })}
+                                title={user.status === "active" ? "Deactivate" : "Activate"}
+                              >
+                                {user.status === "active"
+                                  ? <UserX className="h-3.5 w-3.5 text-danger" />
+                                  : <UserCheck className="h-3.5 w-3.5 text-emerald-600" />}
+                              </Button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
 
@@ -217,6 +238,7 @@ export function UsersPage() {
         onSubmit={(d) => createMutation.mutate(d)}
         loading={createMutation.isPending}
         title="Create New User"
+        isSuperAdmin={isSuperAdmin}
       />
 
       {/* Edit Dialog */}
@@ -229,14 +251,32 @@ export function UsersPage() {
           title="Edit User"
           defaultValues={editUser}
           isEdit
+          isSuperAdmin={isSuperAdmin}
         />
       )}
     </div>
   );
 }
 
-function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues, isEdit = false }) {
-  const schema = isEdit ? updateSchema : createSchema;
+function buildSchema(isEdit, isSuperAdmin) {
+  const roleEnum = isSuperAdmin ? ["employee", "admin"] : ["employee"];
+  const base = z.object({
+    employee_code: z.string().min(1),
+    full_name: z.string().min(2),
+    email: z.string().email(),
+    role: z.enum(roleEnum),
+    department: z.string().optional(),
+    designation: z.string().optional(),
+    phone: z.string().optional(),
+  });
+  if (isEdit) {
+    return base.partial().extend({ status: z.enum(["active", "inactive"]).optional() });
+  }
+  return base;
+}
+
+function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues, isEdit = false, isSuperAdmin }) {
+  const schema = buildSchema(isEdit, isSuperAdmin);
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
     defaultValues: defaultValues || { role: "employee" },
@@ -254,17 +294,13 @@ function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold">Employee Code *</Label>
                 <Input placeholder="EMP001" {...register("employee_code")} />
-                {errors.employee_code && (
-                  <p className="text-xs text-danger">{String(errors.employee_code.message)}</p>
-                )}
+                {errors.employee_code && <p className="text-xs text-danger">{String(errors.employee_code.message)}</p>}
               </div>
             )}
             <div className={isEdit ? "col-span-2" : ""}>
               <Label className="text-sm font-semibold">Full Name *</Label>
               <Input placeholder="John Doe" className="mt-1.5" {...register("full_name")} />
-              {errors.full_name && (
-                <p className="text-xs text-danger mt-1">{String(errors.full_name.message)}</p>
-              )}
+              {errors.full_name && <p className="text-xs text-danger mt-1">{String(errors.full_name.message)}</p>}
             </div>
           </div>
 
@@ -284,8 +320,8 @@ function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
+                      {isSuperAdmin && <SelectItem value="admin">Admin</SelectItem>}
                       <SelectItem value="employee">Employee</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

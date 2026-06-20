@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 
 export const useAuthStore = create()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       refreshToken: null,
@@ -22,6 +22,11 @@ export const useAuthStore = create()(
         localStorage.removeItem("refresh_token");
         set({ user: null, accessToken: null, refreshToken: null, isAuthenticated: false });
       },
+
+      // Role helpers
+      isSuperAdmin: () => get().user?.role === "super_admin",
+      isAdmin: () => ["admin", "super_admin"].includes(get().user?.role),
+      isEmployee: () => get().user?.role === "employee",
     }),
     {
       name: "hourhive-auth",

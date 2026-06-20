@@ -2,15 +2,27 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, Activity, CheckSquare,
   BarChart3, TrendingUp, ChevronLeft, ChevronRight, ClipboardList, Timer,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
 
+const ROLE_LABEL = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  employee: "Employee",
+};
+
 const navSections = [
+  {
+    label: "Overview",
+    items: [
+      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+    ],
+  },
   {
     label: "Timesheets",
     items: [
-      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
       { label: "My Timesheets", path: "/timesheets", icon: ClipboardList },
       { label: "Log Time", path: "/timesheets/entry", icon: Timer },
       { label: "Weekly View", path: "/timesheets/weekly", icon: FolderKanban },
@@ -20,10 +32,17 @@ const navSections = [
     label: "Management",
     adminOnly: true,
     items: [
-      { label: "Approvals", path: "/approvals", icon: CheckSquare, adminOnly: true },
-      { label: "Users", path: "/users", icon: Users, adminOnly: true },
+      { label: "Approvals", path: "/approvals", icon: CheckSquare },
+      { label: "Users", path: "/users", icon: Users },
       { label: "Projects", path: "/projects", icon: FolderKanban },
-      { label: "Activities", path: "/activities", icon: Activity, adminOnly: true },
+      { label: "Activities", path: "/activities", icon: Activity },
+    ],
+  },
+  {
+    label: "Administration",
+    superAdminOnly: true,
+    items: [
+      { label: "Audit Logs", path: "/audit-logs", icon: Shield },
     ],
   },
   {
@@ -38,7 +57,8 @@ const navSections = [
 export function Sidebar({ open, onToggle }) {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const isAdmin = user?.role === "admin";
+  const isSuperAdmin = user?.role === "super_admin";
+  const isAdmin = isSuperAdmin || user?.role === "admin";
 
   return (
     <aside
@@ -80,9 +100,8 @@ export function Sidebar({ open, onToggle }) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-sidebar py-3 px-2">
         {navSections.map((section) => {
+          if (section.superAdminOnly && !isSuperAdmin) return null;
           if (section.adminOnly && !isAdmin) return null;
-          const visibleItems = section.items.filter((item) => !("adminOnly" in item) || !item.adminOnly || isAdmin);
-          if (visibleItems.length === 0) return null;
 
           return (
             <div key={section.label} className="mb-1">
@@ -91,10 +110,10 @@ export function Sidebar({ open, onToggle }) {
                   {section.label}
                 </p>
               )}
-              {!open && section.label !== "Timesheets" && (
+              {!open && section.label !== "Overview" && (
                 <div className="mx-3 my-2 h-px bg-white/10" />
               )}
-              {visibleItems.map((item) => (
+              {section.items.map((item) => (
                 <NavLink
                   key={item.path}
                   item={item}
@@ -115,19 +134,25 @@ export function Sidebar({ open, onToggle }) {
         {open ? (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white"
-              style={{ background: "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}>
+              style={{ background: isSuperAdmin
+                ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                : "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}>
               {user?.full_name?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white/90 truncate">{user?.full_name}</p>
-              <p className="text-[10px] text-white/45 capitalize font-medium">{user?.role}</p>
+              <p className="text-[10px] text-white/45 font-medium">
+                {ROLE_LABEL[user?.role] || user?.role}
+              </p>
             </div>
           </div>
         ) : (
           <div
-            title={user?.full_name}
+            title={`${user?.full_name} (${ROLE_LABEL[user?.role] || user?.role})`}
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-            style={{ background: "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}
+            style={{ background: isSuperAdmin
+              ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+              : "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}
           >
             {user?.full_name?.charAt(0).toUpperCase()}
           </div>
@@ -150,7 +175,6 @@ function NavLink({ item, open, active }) {
           : "text-white/55 hover:bg-white/7 hover:text-white/90"
       )}
     >
-      {/* Active left border indicator */}
       {active && (
         <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-secondary" />
       )}
