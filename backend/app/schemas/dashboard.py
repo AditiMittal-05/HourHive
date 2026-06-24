@@ -11,7 +11,7 @@ class EmployeeKPIs(BaseModel):
     rejected_count: int
 
 
-class AdminKPIs(BaseModel):
+class ApproverKPIs(BaseModel):
     pending_approvals: int
     approved_this_month: int
     rejected_this_month: int
@@ -64,8 +64,8 @@ class PendingItem(BaseModel):
     submitted_at: Optional[str] = None
 
 
-class AdminDashboard(BaseModel):
-    kpis: AdminKPIs
+class ApproverDashboard(BaseModel):
+    kpis: ApproverKPIs
     top_projects: List[TopProject]
     pending_approvals: List[PendingItem]
     monthly_hours_chart: List[ChartDataPoint]

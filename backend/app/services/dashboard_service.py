@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from decimal import Decimal
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func, extract
 from app.models.timesheet_header import TimesheetHeader, TimesheetStatus
@@ -7,7 +8,7 @@ from app.models.timesheet_detail import TimesheetDetail
 from app.models.user import User, UserStatus
 from app.models.project import Project
 from app.schemas.dashboard import (
-    EmployeeDashboard, EmployeeKPIs, AdminDashboard, AdminKPIs,
+    EmployeeDashboard, EmployeeKPIs, ApproverDashboard, ApproverKPIs,
     WeeklyHoursData, RecentEntry, HeatmapDay, TopProject, PendingItem, ChartDataPoint,
 )
 
@@ -59,8 +60,7 @@ class DashboardService:
         from app.models.project import Project
         from app.models.activity import Activity
         recent_rows = self.db.query(
-            TimesheetDetail, Project.project_name, Activity.activity_name,
-            TimesheetHeader.status
+            TimesheetDetail, Project.project_name, Activity.activity_name, TimesheetHeader.status
         ).join(Project, TimesheetDetail.project_id == Project.id)\
          .join(Activity, TimesheetDetail.activity_id == Activity.id)\
          .join(TimesheetHeader, TimesheetDetail.header_id == TimesheetHeader.id)\
@@ -93,39 +93,58 @@ class DashboardService:
         return EmployeeDashboard(kpis=kpis, weekly_hours=weekly_hours,
                                  recent_entries=recent_entries, heatmap=heatmap)
 
-    def get_admin_dashboard(self) -> AdminDashboard:
+    def get_approver_dashboard(self, approver_id: Optional[int] = None) -> ApproverDashboard:
+        """
+        approver_id=None  → super_admin context, shows all data.
+        approver_id=<id>  → scopes all queries to the approver's direct reports.
+        """
         today = date.today()
         month_start = today.replace(day=1)
 
-        pending = self.db.query(func.count(TimesheetHeader.id)).filter(
-            TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED]),
-            TimesheetHeader.is_deleted == False,
-        ).scalar() or 0
+        def ts_query(base_filter):
+            q = self.db.query(func.count(TimesheetHeader.id)).filter(
+                *base_filter, TimesheetHeader.is_deleted == False
+            )
+            if approver_id is not None:
+                q = q.join(User, TimesheetHeader.employee_id == User.id).filter(
+                    User.manager_id == approver_id
+                )
+            return q.scalar() or 0
 
-        approved_month = self.db.query(func.count(TimesheetHeader.id)).filter(
+        pending = ts_query([
+            TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED])
+        ])
+        approved_month = ts_query([
             TimesheetHeader.status == TimesheetStatus.APPROVED,
             TimesheetHeader.approved_at >= month_start,
-            TimesheetHeader.is_deleted == False,
-        ).scalar() or 0
-
-        rejected_month = self.db.query(func.count(TimesheetHeader.id)).filter(
+        ])
+        rejected_month = ts_query([
             TimesheetHeader.status == TimesheetStatus.REJECTED,
-            TimesheetHeader.is_deleted == False,
             TimesheetHeader.week_start_date >= month_start,
-        ).scalar() or 0
+        ])
 
-        total_emp = self.db.query(func.count(User.id)).filter(
-            User.status == UserStatus.ACTIVE, User.is_deleted == False,
-        ).scalar() or 0
+        # Employee / team count
+        emp_q = self.db.query(func.count(User.id)).filter(
+            User.status == UserStatus.ACTIVE, User.is_deleted == False
+        )
+        if approver_id is not None:
+            emp_q = emp_q.filter(User.manager_id == approver_id)
+        total_emp = emp_q.scalar() or 0
 
-        avg_hours = self.db.query(
+        # Avg hours per employee (current month)
+        hours_q = self.db.query(
             func.avg(func.sum(TimesheetDetail.hours_worked))
         ).filter(
             TimesheetDetail.work_date >= month_start,
             TimesheetDetail.is_deleted == False,
-        ).group_by(TimesheetDetail.employee_id).scalar() or Decimal("0")
+        )
+        if approver_id is not None:
+            hours_q = hours_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+                User.manager_id == approver_id
+            )
+        avg_hours = hours_q.group_by(TimesheetDetail.employee_id).scalar() or Decimal("0")
 
-        kpis = AdminKPIs(
+        kpis = ApproverKPIs(
             pending_approvals=pending,
             approved_this_month=approved_month,
             rejected_this_month=rejected_month,
@@ -134,44 +153,60 @@ class DashboardService:
             avg_hours_per_employee=Decimal(str(round(float(avg_hours), 2))),
         )
 
-        # Top projects
-        top_proj_rows = self.db.query(
+        # Top projects (scoped)
+        top_proj_q = self.db.query(
             Project.project_name,
             func.sum(TimesheetDetail.hours_worked).label("total"),
         ).join(TimesheetDetail, Project.id == TimesheetDetail.project_id)\
          .filter(
             TimesheetDetail.work_date >= month_start,
             TimesheetDetail.is_deleted == False,
-        ).group_by(Project.project_name).order_by(func.sum(TimesheetDetail.hours_worked).desc()).limit(5).all()
+        )
+        if approver_id is not None:
+            top_proj_q = top_proj_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+                User.manager_id == approver_id
+            )
+        top_proj_rows = top_proj_q.group_by(Project.project_name)\
+            .order_by(func.sum(TimesheetDetail.hours_worked).desc()).limit(5).all()
         top_projects = [TopProject(project_name=r.project_name, total_hours=float(r.total)) for r in top_proj_rows]
 
         # Pending queue
-        pending_items_rows = self.db.query(TimesheetHeader).filter(
+        pend_q = self.db.query(TimesheetHeader).filter(
             TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED]),
             TimesheetHeader.is_deleted == False,
-        ).order_by(TimesheetHeader.submitted_at.asc()).limit(10).all()
+        )
+        if approver_id is not None:
+            pend_q = pend_q.join(User, TimesheetHeader.employee_id == User.id).filter(
+                User.manager_id == approver_id
+            )
+        pending_items_rows = pend_q.order_by(TimesheetHeader.submitted_at.asc()).limit(10).all()
         pending_items = [
             PendingItem(
                 header_id=h.id,
                 employee_name=h.employee.full_name if h.employee else "",
-                week_label=f"{h.week_start_date} – {h.week_end_date}",
+                week_label=f"{h.week_start_date} - {h.week_end_date}",
                 total_hours=float(h.total_hours),
                 submitted_at=str(h.submitted_at) if h.submitted_at else None,
             ) for h in pending_items_rows
         ]
 
-        # Monthly hours chart (last 6 months)
+        # Monthly hours chart (last 6 months, scoped)
         monthly_chart = []
         for i in range(5, -1, -1):
             m = (today.month - i - 1) % 12 + 1
             y = today.year if (today.month - i) > 0 else today.year - 1
-            hrs = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
+            hrs_q = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
                 extract("month", TimesheetDetail.work_date) == m,
                 extract("year", TimesheetDetail.work_date) == y,
                 TimesheetDetail.is_deleted == False,
-            ).scalar() or 0
+            )
+            if approver_id is not None:
+                hrs_q = hrs_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+                    User.manager_id == approver_id
+                )
+            hrs = hrs_q.scalar() or 0
             import calendar
             monthly_chart.append(ChartDataPoint(label=f"{calendar.month_abbr[m]} {y}", value=float(hrs)))
 
-        return AdminDashboard(kpis=kpis, top_projects=top_projects,
-                              pending_approvals=pending_items, monthly_hours_chart=monthly_chart)
+        return ApproverDashboard(kpis=kpis, top_projects=top_projects,
+                                 pending_approvals=pending_items, monthly_hours_chart=monthly_chart)

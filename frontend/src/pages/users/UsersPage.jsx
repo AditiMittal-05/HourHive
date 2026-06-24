@@ -15,20 +15,9 @@ import { SkeletonTable } from "@/components/shared/PageLoader";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useAuthStore } from "@/store/auth.store";
-
-const ROLE_BADGE = {
-  super_admin: { label: "Super Admin", style: { background: "rgba(217,119,6,0.1)", color: "#92400E", border: "1px solid rgba(217,119,6,0.2)" } },
-  admin: { label: "Admin", style: { background: "rgba(11,46,89,0.08)", color: "#0B2E59", border: "1px solid rgba(11,46,89,0.2)" } },
-  employee: { label: "Employee", style: { background: "rgba(100,116,139,0.08)", color: "#475569", border: "1px solid rgba(100,116,139,0.2)" } },
-};
 
 export function UsersPage() {
-  const currentUser = useAuthStore((s) => s.user);
-  const isSuperAdmin = currentUser?.role === "super_admin";
-
   const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [createOpen, setCreateOpen] = useState(false);
@@ -37,10 +26,9 @@ export function UsersPage() {
   const qc = useQueryClient();
 
   const { data, isLoading } = useQuery({
-    queryKey: ["users", search, roleFilter, statusFilter, page],
+    queryKey: ["users", search, statusFilter, page],
     queryFn: () => usersService.list({
       search,
-      role: roleFilter || undefined,
       status: statusFilter || undefined,
       page,
       page_size: 15,
@@ -67,17 +55,13 @@ export function UsersPage() {
     onError: (e) => toast.error("Failed", e?.response?.data?.detail || "Cannot modify this user"),
   });
 
-  const canActOn = (user) => user.role !== "super_admin";
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary tracking-tight">User Management</h1>
-          <p className="text-text-secondary text-sm mt-0.5">
-            {isSuperAdmin ? "Full access — manage admins and employees" : "Manage employees"}
-          </p>
+          <p className="text-text-secondary text-sm mt-0.5">Create and manage employee accounts</p>
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="h-4 w-4" /> Add User
@@ -97,14 +81,6 @@ export function UsersPage() {
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               />
             </div>
-            <Select value={roleFilter || "all"} onValueChange={(v) => { setRoleFilter(v === "all" ? "" : v); setPage(1); }}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="All Roles" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {isSuperAdmin && <SelectItem value="admin">Admin</SelectItem>}
-                <SelectItem value="employee">Employee</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}>
               <SelectTrigger className="w-36"><SelectValue placeholder="All Status" /></SelectTrigger>
               <SelectContent>
@@ -127,7 +103,7 @@ export function UsersPage() {
               <table className="enterprise-table w-full">
                 <thead>
                   <tr>
-                    {["Code", "Name", "Email", "Department", "Role", "Status", "Actions"].map((h) => (
+                    {["Code", "Name", "Email", "Department", "Manager", "Status", "Actions"].map((h) => (
                       <th key={h}>{h}</th>
                     ))}
                   </tr>
@@ -135,10 +111,17 @@ export function UsersPage() {
                 <tbody>
                   {(!data?.items || data.items.length === 0) ? (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-text-secondary text-sm">No users found</td>
+                      <td colSpan={7} className="py-16 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <div className="w-12 h-12 rounded-full bg-light-bg flex items-center justify-center">
+                            <Search className="h-5 w-5 text-text-secondary/40" />
+                          </div>
+                          <p className="text-text-secondary font-medium">No users found</p>
+                          <p className="text-text-secondary text-sm">Add users to get started</p>
+                        </div>
+                      </td>
                     </tr>
                   ) : data.items.map((user) => {
-                    const roleInfo = ROLE_BADGE[user.role] || ROLE_BADGE.employee;
                     const isProtected = user.role === "super_admin";
                     return (
                       <tr key={user.id}>
@@ -159,6 +142,11 @@ export function UsersPage() {
                               <p className="text-sm font-semibold text-text-primary flex items-center gap-1.5">
                                 {user.full_name}
                                 {isProtected && <Shield className="h-3.5 w-3.5" style={{ color: "#D97706" }} />}
+                                {user.can_approve_timesheets && !isProtected && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(167,206,57,0.15)", color: "#527A0F" }}>
+                                    Approver
+                                  </span>
+                                )}
                               </p>
                               {user.designation && (
                                 <p className="text-xs text-text-secondary">{user.designation}</p>
@@ -168,13 +156,7 @@ export function UsersPage() {
                         </td>
                         <td className="text-sm text-text-secondary">{user.email}</td>
                         <td className="text-sm text-text-secondary">{user.department || <span className="text-text-secondary/40">—</span>}</td>
-                        <td>
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                            style={roleInfo.style}>
-                            {isProtected && <Shield className="h-3 w-3" />}
-                            {roleInfo.label}
-                          </span>
-                        </td>
+                        <td className="text-sm text-text-secondary">{user.manager_name || <span className="text-text-secondary/40">—</span>}</td>
                         <td>
                           <Badge variant={user.status === "active" ? "success" : "destructive"} className="capitalize">
                             {user.status}
@@ -186,18 +168,13 @@ export function UsersPage() {
                           ) : (
                             <div className="flex items-center gap-1">
                               <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
-                                onClick={() => setEditUser(user)}
-                                title="Edit"
+                                size="icon" variant="ghost" className="h-8 w-8"
+                                onClick={() => setEditUser(user)} title="Edit"
                               >
                                 <Edit className="h-3.5 w-3.5" />
                               </Button>
                               <Button
-                                size="icon"
-                                variant="ghost"
-                                className="h-8 w-8"
+                                size="icon" variant="ghost" className="h-8 w-8"
                                 onClick={() => toggleStatus.mutate({ id: user.id, active: user.status === "inactive" })}
                                 title={user.status === "active" ? "Deactivate" : "Activate"}
                               >
@@ -238,7 +215,6 @@ export function UsersPage() {
         onSubmit={(d) => createMutation.mutate(d)}
         loading={createMutation.isPending}
         title="Create New User"
-        isSuperAdmin={isSuperAdmin}
       />
 
       {/* Edit Dialog */}
@@ -251,35 +227,30 @@ export function UsersPage() {
           title="Edit User"
           defaultValues={editUser}
           isEdit
-          isSuperAdmin={isSuperAdmin}
         />
       )}
     </div>
   );
 }
 
-function buildSchema(isEdit, isSuperAdmin) {
-  const roleEnum = isSuperAdmin ? ["employee", "admin"] : ["employee"];
-  const base = z.object({
-    employee_code: z.string().min(1),
-    full_name: z.string().min(2),
-    email: z.string().email(),
-    role: z.enum(roleEnum),
-    department: z.string().optional(),
-    designation: z.string().optional(),
-    phone: z.string().optional(),
-  });
-  if (isEdit) {
-    return base.partial().extend({ status: z.enum(["active", "inactive"]).optional() });
-  }
-  return base;
-}
+const createSchema = z.object({
+  employee_code: z.string().min(1),
+  full_name: z.string().min(2),
+  email: z.string().email(),
+  department: z.string().optional(),
+  designation: z.string().optional(),
+  phone: z.string().optional(),
+});
 
-function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues, isEdit = false, isSuperAdmin }) {
-  const schema = buildSchema(isEdit, isSuperAdmin);
+const editSchema = createSchema.partial().extend({
+  status: z.enum(["active", "inactive"]).optional(),
+});
+
+function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues, isEdit = false }) {
+  const schema = isEdit ? editSchema : createSchema;
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: defaultValues || { role: "employee" },
+    defaultValues: defaultValues || {},
   });
 
   return (
@@ -310,42 +281,24 @@ function UserFormDialog({ open, onClose, onSubmit, loading, title, defaultValues
             {errors.email && <p className="text-xs text-danger">{String(errors.email.message)}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {isEdit && (
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold">Role</Label>
+              <Label className="text-sm font-semibold">Status</Label>
               <Controller
-                name="role"
+                name="status"
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {isSuperAdmin && <SelectItem value="admin">Admin</SelectItem>}
-                      <SelectItem value="employee">Employee</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
             </div>
-            {isEdit && (
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold">Status</Label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">Active</SelectItem>
-                        <SelectItem value="inactive">Inactive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </div>
-            )}
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">

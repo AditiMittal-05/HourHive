@@ -4,7 +4,7 @@ from typing import Optional
 
 from app.database.session import get_db
 from app.api.deps import get_current_active_user
-from app.core.permissions import require_admin
+from app.core.permissions import require_super_admin
 from app.schemas.activity import ActivityCreate, ActivityUpdate, ActivityResponse
 from app.schemas.common import PaginatedResponse
 from app.services.activity_service import ActivityService
@@ -23,7 +23,8 @@ def list_activities(
     all_items = ActivityService(db).get_all()
     if search:
         search_lower = search.lower()
-        all_items = [a for a in all_items if search_lower in a.activity_name.lower() or search_lower in a.activity_code.lower()]
+        all_items = [a for a in all_items
+                     if search_lower in a.activity_name.lower() or search_lower in a.activity_code.lower()]
     total = len(all_items)
     start = (page - 1) * page_size
     items = all_items[start:start + page_size]
@@ -39,7 +40,7 @@ def list_activities(
 @router.post("", response_model=ActivityResponse, status_code=201)
 def create_activity(
     body: ActivityCreate,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ActivityService(db).create(body, created_by=current_user.id)
@@ -71,7 +72,7 @@ def get_activity(
 def update_activity(
     activity_id: int,
     body: ActivityUpdate,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ActivityService(db).update(activity_id, body, updated_by=current_user.id)
@@ -80,7 +81,7 @@ def update_activity(
 @router.patch("/{activity_id}/deactivate")
 def deactivate_activity(
     activity_id: int,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     from app.models.activity import ActivityStatus
@@ -91,7 +92,7 @@ def deactivate_activity(
 @router.patch("/{activity_id}/activate")
 def activate_activity(
     activity_id: int,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     from app.models.activity import ActivityStatus

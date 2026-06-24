@@ -25,7 +25,8 @@ export const useAuthStore = create()(
 
       // Role helpers
       isSuperAdmin: () => get().user?.role === "super_admin",
-      isAdmin: () => ["admin", "super_admin"].includes(get().user?.role),
+      isApprover: () =>
+        get().user?.role === "super_admin" || get().user?.can_approve_timesheets === true,
       isEmployee: () => get().user?.role === "employee",
     }),
     {

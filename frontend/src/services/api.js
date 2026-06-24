@@ -2,6 +2,9 @@ import axios from "axios";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "/api/v1";
 
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+const onAuthPage = () => AUTH_PATHS.some((p) => window.location.pathname.startsWith(p));
+
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { "Content-Type": "application/json" },
@@ -19,8 +22,15 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
+
+      // Already on login/auth page — do not redirect, avoids reload loop
+      if (onAuthPage()) {
+        return Promise.reject(error);
+      }
+
       const refresh = localStorage.getItem("refresh_token");
       if (refresh) {
         try {

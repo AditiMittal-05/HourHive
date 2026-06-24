@@ -1,5 +1,6 @@
 import secrets
 import string
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from app.core.security import get_password_hash
 from app.core.exceptions import ConflictException, NotFoundException, BusinessRuleException
@@ -58,14 +59,10 @@ class UserService:
         if not user or user.is_deleted:
             raise NotFoundException("User not found")
         guard_super_admin_target(user)
-        if data.role is not None and not can_manage_role(actor_role, data.role):
-            raise BusinessRuleException(
-                f"You do not have permission to assign role '{data.role}'."
-            )
         if data.email and data.email != user.email:
             if self.repo.get_by_email(data.email):
                 raise ConflictException("Email already in use")
-        old = {"role": user.role.value, "status": user.status.value, "email": user.email}
+        old = {"status": user.status.value, "email": user.email}
         for field, value in data.model_dump(exclude_none=True).items():
             setattr(user, field, value)
         user.updated_by = updated_by
@@ -101,6 +98,42 @@ class UserService:
         )
         return user
 
+    def set_manager(self, user_id: int, manager_id: Optional[int], updated_by: int) -> User:
+        user = self.repo.get(user_id)
+        if not user or user.is_deleted:
+            raise NotFoundException("User not found")
+        guard_super_admin_target(user)
+        if manager_id is not None:
+            if manager_id == user_id:
+                raise BusinessRuleException("A user cannot be their own manager.")
+            manager = self.repo.get(manager_id)
+            if not manager or manager.is_deleted:
+                raise NotFoundException("Manager not found")
+        user.manager_id = manager_id
+        user.updated_by = updated_by
+        self.db.commit()
+        self.db.refresh(user)
+        AuditService(self.db).log(
+            user_id=updated_by, entity_type="User", entity_id=user_id,
+            action="SET_MANAGER", new_values={"manager_id": manager_id},
+        )
+        return user
+
+    def toggle_approver(self, user_id: int, can_approve: bool, updated_by: int) -> User:
+        user = self.repo.get(user_id)
+        if not user or user.is_deleted:
+            raise NotFoundException("User not found")
+        guard_super_admin_target(user)
+        user.can_approve_timesheets = can_approve
+        user.updated_by = updated_by
+        self.db.commit()
+        self.db.refresh(user)
+        AuditService(self.db).log(
+            user_id=updated_by, entity_type="User", entity_id=user_id,
+            action="TOGGLE_APPROVER", new_values={"can_approve_timesheets": can_approve},
+        )
+        return user
+
     def get_detail(self, user_id: int) -> User:
         user = self.repo.get(user_id)
         if not user or user.is_deleted:
@@ -114,3 +147,9 @@ class UserService:
 
     def get_dropdown(self):
         return self.repo.get_all_active_employees()
+
+    def get_approvers(self) -> List[User]:
+        return self.repo.get_approvers()
+
+    def get_org_tree(self) -> List[User]:
+        return self.repo.get_org_tree()

@@ -2,63 +2,63 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, FolderKanban, Activity, CheckSquare,
   BarChart3, TrendingUp, ChevronLeft, ChevronRight, ClipboardList, Timer,
-  Shield,
+  Shield, CalendarDays, GitBranch, UserCog,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
 
 const ROLE_LABEL = {
   super_admin: "Super Admin",
-  admin: "Admin",
   employee: "Employee",
 };
-
-const navSections = [
-  {
-    label: "Overview",
-    items: [
-      { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: "Timesheets",
-    items: [
-      { label: "My Timesheets", path: "/timesheets", icon: ClipboardList },
-      { label: "Log Time", path: "/timesheets/entry", icon: Timer },
-      { label: "Weekly View", path: "/timesheets/weekly", icon: FolderKanban },
-    ],
-  },
-  {
-    label: "Management",
-    adminOnly: true,
-    items: [
-      { label: "Approvals", path: "/approvals", icon: CheckSquare },
-      { label: "Users", path: "/users", icon: Users },
-      { label: "Projects", path: "/projects", icon: FolderKanban },
-      { label: "Activities", path: "/activities", icon: Activity },
-    ],
-  },
-  {
-    label: "Administration",
-    superAdminOnly: true,
-    items: [
-      { label: "Audit Logs", path: "/audit-logs", icon: Shield },
-    ],
-  },
-  {
-    label: "Insights",
-    items: [
-      { label: "Reports", path: "/reports", icon: BarChart3 },
-      { label: "Analytics", path: "/analytics", icon: TrendingUp },
-    ],
-  },
-];
 
 export function Sidebar({ open, onToggle }) {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
   const isSuperAdmin = user?.role === "super_admin";
-  const isAdmin = isSuperAdmin || user?.role === "admin";
+  const isApprover = isSuperAdmin || user?.can_approve_timesheets === true;
+
+  const navSections = [
+    {
+      label: "Overview",
+      items: [
+        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
+      label: "Timesheets",
+      items: [
+        { label: "My Timesheets", path: "/timesheets", icon: ClipboardList },
+        { label: "Log Time", path: "/timesheets/entry", icon: Timer },
+        { label: "Weekly View", path: "/timesheets/weekly", icon: FolderKanban },
+      ],
+    },
+    ...(isApprover ? [{
+      label: "Approvals",
+      items: [
+        { label: "Approval Queue", path: "/approvals", icon: CheckSquare },
+      ],
+    }] : []),
+    {
+      label: "Insights",
+      items: [
+        { label: "Reports", path: "/reports", icon: BarChart3 },
+        { label: "Analytics", path: "/analytics", icon: TrendingUp },
+      ],
+    },
+    ...(isSuperAdmin ? [{
+      label: "Administration",
+      items: [
+        { label: "User Management", path: "/users", icon: Users },
+        { label: "Org Hierarchy", path: "/organization", icon: GitBranch },
+        { label: "Approver Mapping", path: "/approver-mapping", icon: UserCog },
+        { label: "Projects", path: "/projects", icon: FolderKanban },
+        { label: "Activities", path: "/activities", icon: Activity },
+        { label: "Holiday Management", path: "/holidays", icon: CalendarDays },
+        { label: "Audit Logs", path: "/audit-logs", icon: Shield },
+      ],
+    }] : []),
+  ];
 
   return (
     <aside
@@ -73,7 +73,7 @@ export function Sidebar({ open, onToggle }) {
         open ? "px-5 gap-3" : "justify-center px-0"
       )}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 relative overflow-hidden"
-          style={{ background: "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}>
+          style={{ background: "linear-gradient(135deg, #00C882 0%, #009A65 100%)" }}>
           <span className="text-sm font-black text-white">g</span>
         </div>
         {open && (
@@ -99,31 +99,26 @@ export function Sidebar({ open, onToggle }) {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto scrollbar-sidebar py-3 px-2">
-        {navSections.map((section) => {
-          if (section.superAdminOnly && !isSuperAdmin) return null;
-          if (section.adminOnly && !isAdmin) return null;
-
-          return (
-            <div key={section.label} className="mb-1">
-              {open && (
-                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-1.5 mt-3 first:mt-0">
-                  {section.label}
-                </p>
-              )}
-              {!open && section.label !== "Overview" && (
-                <div className="mx-3 my-2 h-px bg-white/10" />
-              )}
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  item={item}
-                  open={open}
-                  active={location.pathname === item.path}
-                />
-              ))}
-            </div>
-          );
-        })}
+        {navSections.map((section) => (
+          <div key={section.label} className="mb-1">
+            {open && (
+              <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest px-3 mb-1.5 mt-3 first:mt-0">
+                {section.label}
+              </p>
+            )}
+            {!open && section.label !== "Overview" && (
+              <div className="mx-3 my-2 h-px bg-white/10" />
+            )}
+            {section.items.map((item) => (
+              <NavLink
+                key={item.path}
+                item={item}
+                open={open}
+                active={location.pathname === item.path}
+              />
+            ))}
+          </div>
+        ))}
       </nav>
 
       {/* User footer */}
@@ -134,25 +129,29 @@ export function Sidebar({ open, onToggle }) {
         {open ? (
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white"
-              style={{ background: isSuperAdmin
-                ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-                : "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}>
+              style={{
+                background: isSuperAdmin
+                  ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                  : "linear-gradient(135deg, #1457E8 0%, #0A2EAA 100%)"
+              }}>
               {user?.full_name?.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white/90 truncate">{user?.full_name}</p>
               <p className="text-[10px] text-white/45 font-medium">
-                {ROLE_LABEL[user?.role] || user?.role}
+                {isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Approver" : "Employee"}
               </p>
             </div>
           </div>
         ) : (
           <div
-            title={`${user?.full_name} (${ROLE_LABEL[user?.role] || user?.role})`}
+            title={`${user?.full_name} (${isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Approver" : "Employee"})`}
             className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-            style={{ background: isSuperAdmin
-              ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-              : "linear-gradient(135deg, #A7CE39 0%, #8FB52E 100%)" }}
+            style={{
+              background: isSuperAdmin
+                ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                : "linear-gradient(135deg, #1457E8 0%, #0A2EAA 100%)"
+            }}
           >
             {user?.full_name?.charAt(0).toUpperCase()}
           </div>

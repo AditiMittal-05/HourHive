@@ -9,20 +9,22 @@ const breadcrumbMap = {
   "/timesheets": "My Timesheets",
   "/timesheets/entry": "Log Time",
   "/timesheets/weekly": "Weekly View",
+  "/approvals": "Approval Queue",
   "/users": "User Management",
+  "/organization": "Org Hierarchy",
+  "/approver-mapping": "Approver Mapping",
   "/projects": "Project Management",
   "/activities": "Activity Management",
-  "/approvals": "Approvals",
   "/reports": "Reports",
   "/analytics": "Analytics",
   "/change-password": "Change Password",
   "/audit-logs": "Audit Logs",
+  "/holidays": "Holiday Management",
 };
 
 const ROLE_COLORS = {
   super_admin: { bg: "rgba(217,119,6,0.12)", color: "#92400E", label: "Super Admin" },
-  admin: { bg: "rgba(11,46,89,0.1)", color: "#0B2E59", label: "Admin" },
-  employee: { bg: "rgba(167,206,57,0.12)", color: "#527A0F", label: "Employee" },
+  employee: { bg: "rgba(20,87,232,0.10)", color: "#1457E8", label: "Employee" },
 };
 
 export function TopNavbar({ onMenuToggle }) {
@@ -36,8 +38,8 @@ export function TopNavbar({ onMenuToggle }) {
   const initials = user?.full_name
     ? user.full_name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : "U";
-  const roleStyle = ROLE_COLORS[user?.role] || ROLE_COLORS.employee;
   const isSuperAdmin = user?.role === "super_admin";
+  const roleStyle = ROLE_COLORS[user?.role] || ROLE_COLORS.employee;
 
   const handleLogout = () => {
     logout();
@@ -46,7 +48,7 @@ export function TopNavbar({ onMenuToggle }) {
 
   return (
     <header className="h-16 bg-white border-b border-border-color flex items-center px-5 gap-4 sticky top-0 z-30"
-      style={{ boxShadow: "0 1px 0 0 #E2E8F0" }}>
+      style={{ boxShadow: "0 1px 0 0 #D9E5FF" }}>
 
       {/* Sidebar toggle */}
       <button
@@ -99,14 +101,16 @@ export function TopNavbar({ onMenuToggle }) {
             style={{
               background: isSuperAdmin
                 ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-                : "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)"
+                : "linear-gradient(135deg, #1457E8 0%, #0A2EAA 100%)"
             }}
           >
             {initials}
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-sm font-semibold text-text-primary leading-none">{user?.full_name}</p>
-            <p className="text-xs mt-0.5" style={{ color: roleStyle.color }}>{roleStyle.label}</p>
+            <p className="text-xs mt-0.5" style={{ color: roleStyle.color }}>
+              {isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Approver" : "Employee"}
+            </p>
           </div>
           <ChevronDown className={cn(
             "h-3.5 w-3.5 text-text-secondary transition-transform duration-200",
@@ -118,7 +122,7 @@ export function TopNavbar({ onMenuToggle }) {
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
             <div className="absolute right-0 top-12 w-60 bg-white rounded-xl border border-border-color z-50 overflow-hidden animate-scale-in"
-              style={{ boxShadow: "0 8px 32px -4px rgba(11, 46, 89, 0.18), 0 2px 8px -2px rgba(11, 46, 89, 0.08)" }}>
+              style={{ boxShadow: "0 8px 32px -4px rgba(20, 87, 232, 0.18), 0 2px 8px -2px rgba(20, 87, 232, 0.08)" }}>
 
               {/* User info header */}
               <div className="px-4 py-3.5 border-b border-border-color bg-light-bg">
@@ -128,7 +132,7 @@ export function TopNavbar({ onMenuToggle }) {
                     style={{
                       background: isSuperAdmin
                         ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-                        : "linear-gradient(135deg, #0B2E59 0%, #123D72 100%)"
+                        : "linear-gradient(135deg, #1457E8 0%, #0A2EAA 100%)"
                     }}
                   >
                     {initials}
@@ -143,7 +147,7 @@ export function TopNavbar({ onMenuToggle }) {
                   style={{ background: roleStyle.bg, color: roleStyle.color }}
                 >
                   {isSuperAdmin && <Shield className="h-3 w-3" />}
-                  {roleStyle.label}
+                  {isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Approver" : "Employee"}
                 </span>
               </div>
 

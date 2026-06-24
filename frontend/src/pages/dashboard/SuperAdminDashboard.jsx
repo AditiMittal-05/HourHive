@@ -25,8 +25,8 @@ export function SuperAdminDashboard() {
   const user = useAuthStore((s) => s.user);
 
   const { data, isLoading } = useQuery({
-    queryKey: ["dashboard", "admin"],
-    queryFn: dashboardService.admin,
+    queryKey: ["dashboard", "approver"],
+    queryFn: dashboardService.approver,
   });
 
   if (isLoading) {

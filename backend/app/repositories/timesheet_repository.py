@@ -33,13 +33,40 @@ class TimesheetHeaderRepository(BaseRepository[TimesheetHeader]):
         items = q.offset((page - 1) * page_size).limit(page_size).all()
         return items, total
 
-    def get_pending_approvals(self, page: int = 1, page_size: int = 20) -> Tuple[List[TimesheetHeader], int]:
+    def get_pending_approvals(
+        self, page: int = 1, page_size: int = 20, manager_id: Optional[int] = None
+    ) -> Tuple[List[TimesheetHeader], int]:
+        from app.models.user import User
         q = self.db.query(TimesheetHeader).filter(
             TimesheetHeader.status.in_([TimesheetStatus.SUBMITTED, TimesheetStatus.RESUBMITTED]),
             TimesheetHeader.is_deleted == False,
-        ).order_by(TimesheetHeader.submitted_at.asc())
+        )
+        if manager_id is not None:
+            q = q.join(User, TimesheetHeader.employee_id == User.id).filter(
+                User.manager_id == manager_id
+            )
+        q = q.order_by(TimesheetHeader.submitted_at.asc())
         total = q.count()
         items = q.offset((page - 1) * page_size).limit(page_size).all()
+        return items, total
+
+    def get_all_filtered(
+        self, page: int = 1, page_size: int = 20,
+        employee_id: Optional[int] = None, status: Optional[str] = None,
+        manager_id: Optional[int] = None,
+    ) -> Tuple[List[TimesheetHeader], int]:
+        from app.models.user import User
+        q = self.db.query(TimesheetHeader).filter(TimesheetHeader.is_deleted == False)
+        if manager_id is not None:
+            q = q.join(User, TimesheetHeader.employee_id == User.id).filter(
+                User.manager_id == manager_id
+            )
+        if employee_id:
+            q = q.filter(TimesheetHeader.employee_id == employee_id)
+        if status:
+            q = q.filter(TimesheetHeader.status == status)
+        total = q.count()
+        items = q.order_by(TimesheetHeader.week_start_date.desc()).offset((page - 1) * page_size).limit(page_size).all()
         return items, total
 
     def recalculate_total(self, header: TimesheetHeader) -> None:

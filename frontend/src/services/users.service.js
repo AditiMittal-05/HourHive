@@ -33,4 +33,24 @@ export const usersService = {
     const res = await api.get("/users/dropdown");
     return res.data;
   },
+
+  orgTree: async () => {
+    const res = await api.get("/users/org-tree");
+    return res.data;
+  },
+
+  approvers: async () => {
+    const res = await api.get("/users/approvers");
+    return res.data;
+  },
+
+  setManager: async (userId, managerId) => {
+    const res = await api.put(`/users/${userId}/manager`, { manager_id: managerId });
+    return res.data;
+  },
+
+  toggleApprover: async (userId, canApprove) => {
+    const res = await api.patch(`/users/${userId}/toggle-approver`, { can_approve_timesheets: canApprove });
+    return res.data;
+  },
 };

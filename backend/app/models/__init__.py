@@ -7,8 +7,9 @@ from app.models.approval_history import ApprovalHistory
 from app.models.audit_log import AuditLog
 from app.models.notification_log import NotificationLog
 from app.models.system_config import SystemConfig
+from app.models.holiday import Holiday
 
 __all__ = [
     "User", "Project", "Activity", "TimesheetHeader", "TimesheetDetail",
-    "ApprovalHistory", "AuditLog", "NotificationLog", "SystemConfig",
+    "ApprovalHistory", "AuditLog", "NotificationLog", "SystemConfig", "Holiday",
 ]

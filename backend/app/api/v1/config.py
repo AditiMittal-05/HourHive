@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from app.database.session import get_db
-from app.core.permissions import require_admin
+from app.core.permissions import require_super_admin
 from app.models.system_config import SystemConfig
 
 router = APIRouter(prefix="/config", tags=["System Config"])
@@ -16,7 +16,7 @@ class ConfigUpdate(BaseModel):
 
 
 @router.get("")
-def list_configs(_=Depends(require_admin()), db: Session = Depends(get_db)):
+def list_configs(_=Depends(require_super_admin()), db: Session = Depends(get_db)):
     return db.query(SystemConfig).all()
 
 
@@ -24,7 +24,7 @@ def list_configs(_=Depends(require_admin()), db: Session = Depends(get_db)):
 def upsert_config(
     key: str,
     body: ConfigUpdate,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     cfg = db.query(SystemConfig).filter(SystemConfig.config_key == key).first()

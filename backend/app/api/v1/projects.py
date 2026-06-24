@@ -4,7 +4,7 @@ from typing import Optional
 
 from app.database.session import get_db
 from app.api.deps import get_current_active_user
-from app.core.permissions import require_admin
+from app.core.permissions import require_super_admin
 from app.schemas.project import ProjectCreate, ProjectUpdate, ProjectResponse, ProjectDropdown
 from app.schemas.common import PaginatedResponse
 from app.services.project_service import ProjectService
@@ -34,7 +34,7 @@ def list_projects(
 @router.post("", response_model=ProjectResponse, status_code=201)
 def create_project(
     body: ProjectCreate,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ProjectService(db).create(body, created_by=current_user.id)
@@ -61,7 +61,7 @@ def get_project(
 def update_project(
     project_id: int,
     body: ProjectUpdate,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ProjectService(db).update(project_id, body, updated_by=current_user.id)
@@ -70,7 +70,7 @@ def update_project(
 @router.patch("/{project_id}/deactivate")
 def deactivate_project(
     project_id: int,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     ProjectService(db).toggle_status(project_id, ProjectStatus.INACTIVE, updated_by=current_user.id)

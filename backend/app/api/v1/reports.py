@@ -7,11 +7,16 @@ import io
 
 from app.database.session import get_db
 from app.api.deps import get_current_active_user
-from app.core.permissions import require_admin
+from app.core.permissions import require_super_admin
 from app.services.report_service import ReportService
 from app.services.export_service import ExportService
+from app.models.user import UserRole
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
+
+
+def _can_see_others(current_user) -> bool:
+    return current_user.role == UserRole.SUPER_ADMIN or current_user.can_approve_timesheets
 
 
 @router.get("/daily")
@@ -23,8 +28,7 @@ def daily_report(
     current_user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    from app.models.user import UserRole
-    eid = employee_id if current_user.role == UserRole.ADMIN else current_user.id
+    eid = employee_id if _can_see_others(current_user) and employee_id else current_user.id
     return ReportService(db).get_daily(eid, project_id, start_date, end_date)
 
 
@@ -36,8 +40,7 @@ def monthly_summary(
     current_user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    from app.models.user import UserRole
-    eid = employee_id if current_user.role == UserRole.ADMIN else current_user.id
+    eid = employee_id if _can_see_others(current_user) and employee_id else current_user.id
     return ReportService(db).get_monthly_summary(month, year, eid)
 
 
@@ -46,7 +49,7 @@ def project_effort(
     start_date: Optional[date] = Query(None),
     end_date: Optional[date] = Query(None),
     project_id: Optional[int] = Query(None),
-    _=Depends(require_admin()),
+    _=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ReportService(db).get_project_effort(start_date, end_date, project_id)
@@ -60,8 +63,7 @@ def activity_report(
     current_user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    from app.models.user import UserRole
-    eid = employee_id if current_user.role == UserRole.ADMIN else current_user.id
+    eid = employee_id if _can_see_others(current_user) and employee_id else current_user.id
     return ReportService(db).get_activity_report(start_date, end_date, eid)
 
 
@@ -69,7 +71,7 @@ def activity_report(
 def missing_timesheets(
     start_date: date = Query(...),
     end_date: date = Query(...),
-    _=Depends(require_admin()),
+    _=Depends(require_super_admin()),
     db: Session = Depends(get_db),
 ):
     return ReportService(db).get_missing_timesheets(start_date, end_date)
@@ -85,8 +87,7 @@ def comparison(
     current_user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    from app.models.user import UserRole
-    eid = employee_id if current_user.role == UserRole.ADMIN else current_user.id
+    eid = employee_id if _can_see_others(current_user) else current_user.id
     return ReportService(db).get_comparison(eid, month1, year1, month2, year2)
 
 
@@ -100,14 +101,16 @@ def export_daily(
     current_user=Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
-    from app.models.user import UserRole
-    eid = employee_id if current_user.role == UserRole.ADMIN else current_user.id
+    eid = employee_id if _can_see_others(current_user) and employee_id else current_user.id
     rows = ReportService(db).get_daily(eid, project_id, start_date, end_date)
     svc = ExportService()
     if fmt == "excel":
         buf = svc.export_daily_excel(rows)
-        return StreamingResponse(buf, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                 headers={"Content-Disposition": "attachment; filename=daily_report.xlsx"})
+        return StreamingResponse(
+            buf,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": "attachment; filename=daily_report.xlsx"},
+        )
     buf = svc.export_daily_pdf(rows)
     return StreamingResponse(buf, media_type="application/pdf",
                              headers={"Content-Disposition": "attachment; filename=daily_report.pdf"})

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { Plus, Trash2, Copy, ChevronLeft, ChevronRight, Clock, Pencil } from "lucide-react";
+import { Plus, Trash2, Copy, ChevronLeft, ChevronRight, Clock, Pencil, AlertCircle } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,7 @@ import { timesheetsService } from "@/services/timesheets.service";
 import { projectsService } from "@/services/projects.service";
 import { activitiesService } from "@/services/activities.service";
 import { useToast } from "@/hooks/use-toast";
+import { useHolidays } from "@/hooks/useHolidays";
 
 const HOUR_OPTIONS = [
   0.25,0.50,0.75,1.00,1.25,1.50,1.75,2.00,2.25,2.50,2.75,3.00,
@@ -40,6 +41,7 @@ export function TimesheetEntryPage() {
   const [copyOpen, setCopyOpen] = useState(false);
   const { toast } = useToast();
   const qc = useQueryClient();
+  const { isNonWorkingDay, getNonWorkingReason } = useHolidays();
 
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["timesheet-daily", selectedDate],
@@ -79,6 +81,9 @@ export function TimesheetEntryPage() {
     onError: (e) => toast.error("Failed", e?.response?.data?.detail),
   });
 
+  const isBlocked = isNonWorkingDay(selectedDate);
+  const blockedReason = getNonWorkingReason(selectedDate);
+
   const totalHours = entries.reduce((sum, e) => sum + Number(e.hours_worked), 0);
   const maxHours = 12;
   const progressPct = Math.min((totalHours / maxHours) * 100, 100);
@@ -99,10 +104,10 @@ export function TimesheetEntryPage() {
           <p className="text-text-secondary text-sm mt-0.5">Record your daily work hours</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setCopyOpen(true)} disabled={entries.length === 0}>
+          <Button variant="outline" onClick={() => setCopyOpen(true)} disabled={entries.length === 0 || isBlocked}>
             <Copy className="h-4 w-4" /> Copy Day
           </Button>
-          <Button onClick={() => setAddOpen(true)}>
+          <Button onClick={() => setAddOpen(true)} disabled={isBlocked} title={isBlocked ? blockedReason : undefined}>
             <Plus className="h-4 w-4" /> Add Entry
           </Button>
         </div>
@@ -137,6 +142,18 @@ export function TimesheetEntryPage() {
               max={format(new Date(), "yyyy-MM-dd")}
             />
           </div>
+
+          {/* Non-working day warning */}
+          {isBlocked && (
+            <div className="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl border"
+              style={{ background: "rgba(239,68,68,0.05)", borderColor: "rgba(239,68,68,0.2)" }}>
+              <AlertCircle className="h-4 w-4 flex-shrink-0 text-danger" />
+              <div>
+                <p className="text-sm font-semibold text-danger">Non-working day</p>
+                <p className="text-xs text-danger/70 mt-0.5">{blockedReason} — timesheet entries are not allowed.</p>
+              </div>
+            </div>
+          )}
 
           {/* Progress bar */}
           <div className="mt-5">

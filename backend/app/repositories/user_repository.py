@@ -16,11 +16,14 @@ class UserRepository(BaseRepository[User]):
         return self.db.query(User).filter(User.employee_code == code, User.is_deleted == False).first()
 
     def get_active_by_id(self, id: int) -> Optional[User]:
-        return self.db.query(User).filter(User.id == id, User.is_deleted == False, User.status == UserStatus.ACTIVE).first()
+        return self.db.query(User).filter(
+            User.id == id, User.is_deleted == False, User.status == UserStatus.ACTIVE
+        ).first()
 
-    def search(self, search: str = None, role: UserRole = None, status: UserStatus = None,
-               page: int = 1, page_size: int = 20,
-               exclude_super_admin: bool = False) -> Tuple[List[User], int]:
+    def search(
+        self, search: str = None, role: UserRole = None, status: UserStatus = None,
+        page: int = 1, page_size: int = 20, exclude_super_admin: bool = False,
+    ) -> Tuple[List[User], int]:
         q = self.db.query(User).filter(User.is_deleted == False)
         if exclude_super_admin:
             q = q.filter(User.role != UserRole.SUPER_ADMIN)
@@ -45,3 +48,23 @@ class UserRepository(BaseRepository[User]):
 
     def get_by_reset_token(self, token: str) -> Optional[User]:
         return self.db.query(User).filter(User.password_reset_token == token).first()
+
+    def get_direct_reports(self, manager_id: int) -> List[User]:
+        return self.db.query(User).filter(
+            User.manager_id == manager_id,
+            User.is_deleted == False,
+        ).order_by(User.full_name).all()
+
+    def get_approvers(self) -> List[User]:
+        return self.db.query(User).filter(
+            User.can_approve_timesheets == True,
+            User.is_deleted == False,
+            User.status == UserStatus.ACTIVE,
+        ).order_by(User.full_name).all()
+
+    def get_org_tree(self) -> List[User]:
+        """All non-super_admin users with hierarchy info loaded."""
+        return self.db.query(User).filter(
+            User.is_deleted == False,
+            User.role != UserRole.SUPER_ADMIN,
+        ).order_by(User.full_name).all()

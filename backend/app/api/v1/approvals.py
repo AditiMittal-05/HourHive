@@ -5,11 +5,12 @@ from typing import Optional
 
 from app.database.session import get_db
 from app.api.deps import get_current_active_user
-from app.core.permissions import require_admin
+from app.core.permissions import require_approver
 from app.schemas.timesheet import TimesheetHeaderResponse
 from app.schemas.common import PaginatedResponse
 from app.services.approval_service import ApprovalService
 from app.repositories.timesheet_repository import TimesheetHeaderRepository
+from app.models.user import UserRole
 
 router = APIRouter(prefix="/approvals", tags=["Approval Workflow"])
 
@@ -22,14 +23,19 @@ class RejectAction(BaseModel):
     comment: str
 
 
+def _is_super_admin(user) -> bool:
+    return user.role == UserRole.SUPER_ADMIN
+
+
 @router.get("/pending", response_model=PaginatedResponse)
 def pending_approvals(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    _=Depends(require_admin()),
+    current_user=Depends(require_approver()),
     db: Session = Depends(get_db),
 ):
-    items, total = ApprovalService(db).get_pending(page, page_size)
+    manager_id = None if _is_super_admin(current_user) else current_user.id
+    items, total = ApprovalService(db).get_pending(page, page_size, manager_id=manager_id)
     return PaginatedResponse(
         items=[_to_response(h) for h in items],
         total=total,
@@ -42,10 +48,12 @@ def pending_approvals(
 def approve(
     header_id: int,
     body: ApprovalAction,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_approver()),
     db: Session = Depends(get_db),
 ):
-    header = ApprovalService(db).approve(header_id, current_user.id, body.comment)
+    header = ApprovalService(db).approve(
+        header_id, current_user.id, body.comment, is_super_admin=_is_super_admin(current_user)
+    )
     return _to_response(header)
 
 
@@ -53,10 +61,12 @@ def approve(
 def reject(
     header_id: int,
     body: RejectAction,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_approver()),
     db: Session = Depends(get_db),
 ):
-    header = ApprovalService(db).reject(header_id, current_user.id, body.comment)
+    header = ApprovalService(db).reject(
+        header_id, current_user.id, body.comment, is_super_admin=_is_super_admin(current_user)
+    )
     return _to_response(header)
 
 
@@ -64,10 +74,12 @@ def reject(
 def unlock(
     header_id: int,
     body: ApprovalAction,
-    current_user=Depends(require_admin()),
+    current_user=Depends(require_approver()),
     db: Session = Depends(get_db),
 ):
-    header = ApprovalService(db).unlock(header_id, current_user.id, body.comment)
+    header = ApprovalService(db).unlock(
+        header_id, current_user.id, body.comment, is_super_admin=_is_super_admin(current_user)
+    )
     return _to_response(header)
 
 
@@ -86,18 +98,16 @@ def all_timesheets(
     status: Optional[str] = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    _=Depends(require_admin()),
+    current_user=Depends(require_approver()),
     db: Session = Depends(get_db),
 ):
+    manager_id = None if _is_super_admin(current_user) else current_user.id
     repo = TimesheetHeaderRepository(db)
-    from app.models.timesheet_header import TimesheetHeader, TimesheetStatus
-    q = db.query(TimesheetHeader).filter(TimesheetHeader.is_deleted == False)
-    if employee_id:
-        q = q.filter(TimesheetHeader.employee_id == employee_id)
-    if status:
-        q = q.filter(TimesheetHeader.status == status)
-    total = q.count()
-    items = q.order_by(TimesheetHeader.week_start_date.desc()).offset((page - 1) * page_size).limit(page_size).all()
+    items, total = repo.get_all_filtered(
+        page=page, page_size=page_size,
+        employee_id=employee_id, status=status,
+        manager_id=manager_id,
+    )
     return PaginatedResponse(
         items=[_to_response(h) for h in items],
         total=total,

@@ -6,8 +6,8 @@ export const dashboardService = {
     return res.data;
   },
 
-  admin: async () => {
-    const res = await api.get("/dashboard/admin");
+  approver: async () => {
+    const res = await api.get("/dashboard/approver");
     return res.data;
   },
 };
