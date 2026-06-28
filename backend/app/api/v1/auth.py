@@ -10,6 +10,7 @@ from app.schemas.auth import (
 )
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
+from app.services.email_service import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -31,9 +32,9 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
 
 @router.post("/forgot-password")
 def forgot_password(body: ForgotPasswordRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    svc = AuthService(db)
-    token = svc.forgot_password(body.email)
-    # email sending handled async in production
+    token, full_name = AuthService(db).forgot_password(body.email)
+    if token:
+        background_tasks.add_task(send_password_reset_email, body.email, full_name, token)
     return {"message": "If the email exists, a reset link has been sent."}
 
 

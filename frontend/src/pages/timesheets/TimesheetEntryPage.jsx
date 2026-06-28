@@ -87,7 +87,7 @@ export function TimesheetEntryPage() {
   const totalHours = entries.reduce((sum, e) => sum + Number(e.hours_worked), 0);
   const maxHours = 12;
   const progressPct = Math.min((totalHours / maxHours) * 100, 100);
-  const progressColor = totalHours >= maxHours ? "#EF4444" : totalHours >= 8 ? "#A7CE39" : "#0B2E59";
+  const progressColor = totalHours >= maxHours ? "#EF4444" : totalHours >= 8 ? "#10B981" : "#2563EB";
 
   const changeDate = (days) => {
     const d = parseISO(selectedDate);
@@ -218,7 +218,7 @@ export function TimesheetEntryPage() {
                   {/* Hours badge */}
                   <div
                     className="w-14 h-14 rounded-xl flex flex-col items-center justify-center flex-shrink-0 border"
-                    style={{ background: "rgba(11,46,89,0.04)", borderColor: "rgba(11,46,89,0.10)" }}
+                    style={{ background: "rgba(37,99,235,0.05)", borderColor: "rgba(37,99,235,0.12)" }}
                   >
                     <span className="text-lg font-bold text-primary leading-none">
                       {Number(entry.hours_worked).toFixed(2)}
@@ -403,7 +403,7 @@ function EntryDialog({ open, onClose, onSubmit, loading, title, projects, activi
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold">Description</Label>
             <textarea
-              className="w-full border border-border-color rounded-lg px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-text-secondary/60"
+              className="w-full border border-border-color rounded-xl px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-text-secondary/60"
               placeholder="What did you work on?"
               {...register("description")}
             />

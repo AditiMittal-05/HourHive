@@ -12,6 +12,8 @@ import { RegisterPage } from "@/pages/auth/RegisterPage";
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage";
 import { ChangePasswordPage } from "@/pages/auth/ChangePasswordPage";
+import ProfilePage from "@/pages/profile/ProfilePage";
+import SuperAdminProfilePage from "@/pages/profile/SuperAdminProfilePage";
 
 // App Pages
 import { DashboardPage } from "@/pages/dashboard/DashboardPage";
@@ -28,6 +30,11 @@ import { AuditLogsPage } from "@/pages/audit/AuditLogsPage";
 import { HolidayManagementPage } from "@/pages/holidays/HolidayManagementPage";
 import { OrganizationHierarchyPage } from "@/pages/organization/OrganizationHierarchyPage";
 import { ApproverMappingPage } from "@/pages/organization/ApproverMappingPage";
+
+function ProfileRouter() {
+  const user = useAuthStore((s) => s.user);
+  return user?.role === "super_admin" ? <SuperAdminProfilePage /> : <ProfilePage />;
+}
 
 function ProtectedRoute({ children, superAdminOnly = false, approverOnly = false }) {
   const { isAuthenticated, user } = useAuthStore();
@@ -58,6 +65,7 @@ export default function App() {
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/change-password" element={<ChangePasswordPage />} />
+          <Route path="/profile" element={<ProfileRouter />} />
 
           {/* Timesheets — all authenticated users */}
           <Route path="/timesheets" element={<TimesheetListPage />} />

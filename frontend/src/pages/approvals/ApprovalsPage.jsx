@@ -79,7 +79,7 @@ export function ApprovalsPage() {
   const isActionLoading = approveMutation.isPending || rejectMutation.isPending || unlockMutation.isPending;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -234,7 +234,7 @@ export function ApprovalsPage() {
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  className="w-full border border-border-color rounded-lg px-3 py-2 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full border border-border-color rounded-xl px-3 py-2 text-sm resize-none h-24 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
                   placeholder={actionModal.type === "reject" ? "Reason for rejection (required)" : "Optional comment..."}
                 />
               </div>

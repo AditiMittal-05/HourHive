@@ -133,7 +133,7 @@ export function UsersPage() {
                               style={{
                                 background: isProtected
                                   ? "linear-gradient(135deg, #D97706, #B45309)"
-                                  : "linear-gradient(135deg, #0B2E59, #123D72)"
+                                  : "linear-gradient(135deg, #2563EB, #10B981)"
                               }}
                             >
                               {user.full_name.charAt(0).toUpperCase()}
@@ -143,7 +143,7 @@ export function UsersPage() {
                                 {user.full_name}
                                 {isProtected && <Shield className="h-3.5 w-3.5" style={{ color: "#D97706" }} />}
                                 {user.can_approve_timesheets && !isProtected && (
-                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(167,206,57,0.15)", color: "#527A0F" }}>
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.15)", color: "#065F46" }}>
                                     Approver
                                   </span>
                                 )}

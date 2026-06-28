@@ -85,7 +85,7 @@ export function HolidayManagementPage() {
   const years = [currentYear - 1, currentYear, currentYear + 1, currentYear + 2];
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -122,7 +122,7 @@ export function HolidayManagementPage() {
                   ? "text-white"
                   : "text-text-secondary hover:bg-light-bg border border-border-color"
               )}
-              style={selectedYear === y ? { background: "linear-gradient(135deg, #0B2E59, #123D72)" } : undefined}
+              style={selectedYear === y ? { background: "linear-gradient(135deg, #2563EB, #10B981)" } : undefined}
             >
               {y}
             </button>
@@ -220,7 +220,7 @@ export function HolidayManagementPage() {
                   <div key={holiday.id} className="flex items-center px-5 py-3.5 gap-4 hover:bg-light-bg/50 group">
                     {/* Date badge */}
                     <div className="flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center text-white"
-                      style={{ background: "linear-gradient(135deg, #0B2E59, #123D72)" }}>
+                      style={{ background: "linear-gradient(135deg, #2563EB, #10B981)" }}>
                       <span className="text-lg font-black leading-none">{format(d, "d")}</span>
                       <span className="text-[9px] font-bold uppercase tracking-wider opacity-80">{format(d, "MMM")}</span>
                     </div>

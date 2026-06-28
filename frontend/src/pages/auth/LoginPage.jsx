@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -47,7 +48,12 @@ export function LoginPage() {
   });
 
   return (
-    <div className="p-8 sm:p-10">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.4,0,0.2,1] }}
+      className="p-8 sm:p-10"
+    >
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-text-primary tracking-tight">Welcome back</h2>
@@ -87,8 +93,7 @@ export function LoginPage() {
             </Label>
             <Link
               to="/forgot-password"
-              className="text-xs font-semibold hover:underline"
-              style={{ color: "#0B2E59" }}
+              className="text-xs font-semibold text-primary hover:underline"
             >
               Forgot password?
             </Link>
@@ -143,6 +148,6 @@ export function LoginPage() {
           </a>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

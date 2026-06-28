@@ -132,7 +132,7 @@ export function OrganizationHierarchyPage() {
                       <td>
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #1457E8, #0A2EAA)" }}>
+                            style={{ background: "linear-gradient(135deg, #2563EB, #1D4ED8)" }}>
                             {emp.full_name.charAt(0).toUpperCase()}
                           </div>
                           <div>

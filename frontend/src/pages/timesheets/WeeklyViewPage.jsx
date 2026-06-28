@@ -24,7 +24,7 @@ export function WeeklyViewPage() {
   const weekDates = DAYS.map((_, i) => addDays(weekDate, i));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -137,25 +137,25 @@ export function WeeklyViewPage() {
       {/* Summary cards */}
       {data && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="rounded-xl border border-border-color bg-white p-4 text-center">
+          <div className="rounded-2xl border border-border-color bg-white p-4 text-center shadow-card hover:shadow-card-hover transition-shadow">
             <p className="text-2xl font-bold text-primary tabular-nums">{Number(data.grand_total).toFixed(1)}h</p>
-            <p className="text-xs text-text-secondary mt-1">Total Hours</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Total Hours</p>
           </div>
-          <div className="rounded-xl border border-border-color bg-white p-4 text-center">
+          <div className="rounded-2xl border border-border-color bg-white p-4 text-center shadow-card hover:shadow-card-hover transition-shadow">
             <p className="text-2xl font-bold text-text-primary tabular-nums">{data.entries.length}</p>
-            <p className="text-xs text-text-secondary mt-1">Activity Rows</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Activity Rows</p>
           </div>
-          <div className="rounded-xl border border-border-color bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-secondary tabular-nums">
+          <div className="rounded-2xl border border-border-color bg-white p-4 text-center shadow-card hover:shadow-card-hover transition-shadow">
+            <p className="text-2xl font-bold text-secondary-600 tabular-nums">
               {Object.values(data.day_totals).filter(v => v > 0).length}
             </p>
-            <p className="text-xs text-text-secondary mt-1">Days Worked</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Days Worked</p>
           </div>
-          <div className="rounded-xl border border-border-color bg-white p-4 text-center">
-            <p className="text-2xl font-bold text-text-primary">
-              {data.status ? <span className={`capitalize text-sm ${data.status === "approved" ? "text-success" : data.status === "rejected" ? "text-danger" : "text-warning"}`}>{data.status}</span> : "—"}
+          <div className="rounded-2xl border border-border-color bg-white p-4 text-center shadow-card hover:shadow-card-hover transition-shadow">
+            <p className="text-xl font-bold text-text-primary">
+              {data.status ? <span className={`capitalize ${data.status === "approved" ? "text-success" : data.status === "rejected" ? "text-danger" : "text-warning"}`}>{data.status}</span> : "—"}
             </p>
-            <p className="text-xs text-text-secondary mt-1">Status</p>
+            <p className="text-xs text-text-secondary mt-1 font-medium">Status</p>
           </div>
         </div>
       )}

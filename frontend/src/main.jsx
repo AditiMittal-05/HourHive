@@ -4,6 +4,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import "./index.css";
 
+// Apply saved theme before first render to avoid flash
+(function () {
+  try {
+    const stored = JSON.parse(localStorage.getItem("hourhive-theme") || "{}");
+    const t = stored?.state?.theme || "light";
+    const resolved = t === "dark" ? "dark" : t === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", resolved);
+  } catch (_) {
+    document.documentElement.setAttribute("data-theme", "light");
+  }
+})();
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

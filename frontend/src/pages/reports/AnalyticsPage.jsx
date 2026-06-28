@@ -17,7 +17,7 @@ const MONTHS = [
   "July","August","September","October","November","December",
 ];
 
-const BRAND_COLORS = ["#0B2E59","#A7CE39","#F59E0B","#EF4444","#8B5CF6","#06B6D4"];
+const BRAND_COLORS = ["#2563EB","#10B981","#F59E0B","#EF4444","#8B5CF6","#06B6D4"];
 
 function monthDateRange(month, year) {
   const start = startOfMonth(new Date(year, month - 1));
@@ -191,8 +191,8 @@ export function AnalyticsPage() {
                     <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
                     <Tooltip formatter={(v) => [`${v.toFixed(1)}h`]} contentStyle={tooltipStyle} />
                     <Legend iconType="circle" iconSize={8} />
-                    <Bar name={`${MONTHS[empMonth1 - 1]} ${empYear1}`} dataKey="h1" fill="#0B2E59" radius={[4, 4, 0, 0]} />
-                    <Bar name={`${MONTHS[empMonth2 - 1]} ${empYear2}`} dataKey="h2" fill="#A7CE39" radius={[4, 4, 0, 0]} />
+                    <Bar name={`${MONTHS[empMonth1 - 1]} ${empYear1}`} dataKey="h1" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                    <Bar name={`${MONTHS[empMonth2 - 1]} ${empYear2}`} dataKey="h2" fill="#10B981" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -278,8 +278,8 @@ export function AnalyticsPage() {
                     <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#94A3B8" }} width={80} axisLine={false} tickLine={false} />
                     <Tooltip formatter={(v) => [`${v.toFixed(1)}h`]} contentStyle={tooltipStyle} />
                     <Legend iconType="circle" iconSize={8} />
-                    <Bar name={`${MONTHS[projMonth1 - 1]} ${projYear1}`} dataKey="h1" fill="#0B2E59" radius={[0, 4, 4, 0]} />
-                    <Bar name={`${MONTHS[projMonth2 - 1]} ${projYear2}`} dataKey="h2" fill="#A7CE39" radius={[0, 4, 4, 0]} />
+                    <Bar name={`${MONTHS[projMonth1 - 1]} ${projYear1}`} dataKey="h1" fill="#2563EB" radius={[0, 4, 4, 0]} />
+                    <Bar name={`${MONTHS[projMonth2 - 1]} ${projYear2}`} dataKey="h2" fill="#10B981" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

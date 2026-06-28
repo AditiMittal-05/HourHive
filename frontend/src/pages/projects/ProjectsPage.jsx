@@ -69,7 +69,7 @@ export function ProjectsPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Project Management</h1>
@@ -238,7 +238,7 @@ function ProjectFormDialog({ open, onClose, onSubmit, loading, title, managers, 
           )}
           <div className="space-y-1.5">
             <Label>Description</Label>
-            <textarea className="w-full border border-border-color rounded-lg px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary" placeholder="Brief project description..." {...register("description")} />
+            <textarea className="w-full border border-border-color rounded-xl px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors placeholder:text-text-secondary/60" placeholder="Brief project description..." {...register("description")} />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>

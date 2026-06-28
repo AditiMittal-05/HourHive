@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,7 +56,12 @@ export function RegisterPage() {
   });
 
   return (
-    <div className="p-8 sm:p-10">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.4,0,0.2,1] }}
+      className="p-8 sm:p-10"
+    >
       {/* Header */}
       <div className="mb-7">
         <h2 className="text-2xl font-bold text-text-primary tracking-tight">Create account</h2>
@@ -179,6 +185,6 @@ export function RegisterPage() {
           </Link>
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,10 +28,21 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="p-8 text-center">
-        <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        className="p-8 text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ background: "linear-gradient(135deg, #10B981, #059669)" }}
+        >
+          <CheckCircle className="h-8 w-8 text-white" />
+        </motion.div>
         <h2 className="text-xl font-bold text-text-primary mb-2">Check your email</h2>
         <p className="text-text-secondary text-sm mb-6">
           If an account exists with that email, we've sent a password reset link.
@@ -40,12 +52,17 @@ export function ForgotPasswordPage() {
             <ArrowLeft className="h-4 w-4" /> Back to Sign In
           </Button>
         </Link>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="p-8">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.4,0,0.2,1] }}
+      className="p-8"
+    >
       <Link to="/login" className="inline-flex items-center gap-2 text-sm text-text-secondary hover:text-primary mb-6 transition-colors">
         <ArrowLeft className="h-4 w-4" /> Back to Sign In
       </Link>
@@ -65,6 +82,6 @@ export function ForgotPasswordPage() {
           Send Reset Link
         </Button>
       </form>
-    </div>
+    </motion.div>
   );
 }

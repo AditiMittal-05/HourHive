@@ -144,8 +144,8 @@ export function ApproverMappingPage() {
                           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
                             style={{
                               background: emp.can_approve_timesheets
-                                ? "linear-gradient(135deg, #00C882, #009A65)"
-                                : "linear-gradient(135deg, #1457E8, #0A2EAA)"
+                                ? "linear-gradient(135deg, #10B981, #059669)"
+                                : "linear-gradient(135deg, #2563EB, #1D4ED8)"
                             }}>
                             {emp.full_name.charAt(0).toUpperCase()}
                           </div>

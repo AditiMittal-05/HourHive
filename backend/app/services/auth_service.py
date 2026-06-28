@@ -59,15 +59,15 @@ class AuthService:
         new_refresh = create_refresh_token(user.id)
         return {"access_token": access, "refresh_token": new_refresh, "token_type": "bearer"}
 
-    def forgot_password(self, email: str) -> str:
+    def forgot_password(self, email: str):
+        """Returns (token, full_name) if user exists, else (None, None)."""
         user = self.repo.get_by_email(email)
         if not user:
-            # Don't reveal whether email exists
-            return "If the email exists, a reset link has been sent."
+            return None, None
         token = create_reset_token(email)
         user.password_reset_token = token
         self.db.commit()
-        return token
+        return token, user.full_name
 
     def reset_password(self, token: str, new_password: str) -> None:
         payload = decode_token(token)

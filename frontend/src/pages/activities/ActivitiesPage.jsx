@@ -56,7 +56,7 @@ export function ActivitiesPage() {
   });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Activity Management</h1>
@@ -77,27 +77,27 @@ export function ActivitiesPage() {
       <Card>
         <CardContent className="p-0">
           {isLoading ? <div className="p-6"><SkeletonTable /></div> : (
-            <table className="w-full">
-              <thead className="bg-light-bg border-b border-border-color">
+            <table className="enterprise-table w-full">
+              <thead>
                 <tr>
                   {["Code", "Activity Name", "Category", "Billable", "Status", "Actions"].map((h) => (
-                    <th key={h} className="text-left text-xs font-semibold text-text-secondary px-5 py-3">{h}</th>
+                    <th key={h}>{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border-color">
+              <tbody>
                 {(data?.items || []).map((act) => (
-                  <tr key={act.id} className="hover:bg-light-bg transition-colors">
-                    <td className="px-5 py-3 text-sm font-mono text-text-secondary">{act.activity_code}</td>
-                    <td className="px-5 py-3 text-sm font-medium text-text-primary">{act.activity_name}</td>
-                    <td className="px-5 py-3 text-sm text-text-secondary capitalize">{act.category || "—"}</td>
-                    <td className="px-5 py-3">
+                  <tr key={act.id}>
+                    <td className="text-sm font-mono text-text-secondary">{act.activity_code}</td>
+                    <td className="text-sm font-medium text-text-primary">{act.activity_name}</td>
+                    <td className="text-sm text-text-secondary capitalize">{act.category || "—"}</td>
+                    <td>
                       <Badge variant={act.is_billable ? "success" : "outline"}>{act.is_billable ? "Billable" : "Non-billable"}</Badge>
                     </td>
-                    <td className="px-5 py-3">
+                    <td>
                       <Badge variant={act.status === "active" ? "success" : "destructive"} className="capitalize">{act.status}</Badge>
                     </td>
-                    <td className="px-5 py-3">
+                    <td>
                       <div className="flex gap-1">
                         <Button size="icon" variant="ghost" onClick={() => setEditActivity(act)}><Edit className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => toggleMutation.mutate({ id: act.id, active: act.status === "inactive" })} title={act.status === "active" ? "Deactivate" : "Activate"}>

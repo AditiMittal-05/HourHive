@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Eye, EyeOff, Key } from "lucide-react";
+import { Eye, EyeOff, Key, Shield } from "lucide-react";
 import { useMutation } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
@@ -36,10 +37,21 @@ export function ChangePasswordPage() {
   });
 
   return (
-    <div className="max-w-md mx-auto animate-fade-in">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.4,0,0.2,1] }}
+      className="max-w-md mx-auto"
+    >
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Change Password</h1>
-        <p className="text-text-secondary text-sm mt-1">Update your account password</p>
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, #2563EB, #10B981)" }}>
+            <Shield className="h-4 w-4 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-text-primary">Change Password</h1>
+        </div>
+        <p className="text-text-secondary text-sm mt-1">Update your account password to keep it secure</p>
       </div>
 
       <Card>
@@ -80,6 +92,6 @@ export function ChangePasswordPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

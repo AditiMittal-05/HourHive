@@ -334,7 +334,7 @@ export function ReportsPage() {
                         <div className="h-2 bg-slate-100 rounded-full w-32 overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
-                            style={{ width: `${row.percentage}%`, background: "linear-gradient(90deg, #0B2E59, #A7CE39)" }}
+                            style={{ width: `${row.percentage}%`, background: "linear-gradient(90deg, #2563EB, #10B981)" }}
                           />
                         </div>
                         <span className="text-xs text-text-secondary">{row.percentage}%</span>
