@@ -1,5 +1,8 @@
+import logging
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from app.core.config import settings
+
+logger = logging.getLogger(__name__)
 
 _conf = ConnectionConfig(
     MAIL_USERNAME=settings.MAIL_USERNAME,
@@ -85,8 +88,11 @@ async def send_password_reset_email(to_email: str, full_name: str, reset_token: 
     body = f"""
 <h2>Reset Your Password</h2>
 <p>Hi {full_name}, we received a request to reset your HourHive password.</p>
+<p>Click the button below to set a new password. This link is valid for <strong>2 hours</strong>.</p>
 <a href="{link}" class="btn">Reset Password</a>
-<p style="color:#64748B;font-size:13px;">This link expires in <strong>2 hours</strong>. If you didn't request this, ignore this email.</p>
+<p style="color:#64748B;font-size:13px;">If the button doesn't work, copy and paste this link into your browser:</p>
+<p style="word-break:break-all;font-size:12px;color:#475569;background:#F1F5F9;padding:10px;border-radius:6px;">{link}</p>
+<p style="color:#64748B;font-size:13px;">If you didn't request a password reset, you can safely ignore this email — your password won't change.</p>
 """
     await _send(to_email, "HourHive – Password Reset Request", _base_template("Reset", body))
 
@@ -142,12 +148,17 @@ async def send_weekly_reminder(to_email: str, full_name: str, week_label: str, h
 
 async def _send(to: str, subject: str, html_body: str) -> None:
     if not settings.MAIL_USERNAME:
-        return  # skip sending if email not configured
-    fm = FastMail(_conf)
-    message = MessageSchema(
-        subject=subject,
-        recipients=[to],
-        body=html_body,
-        subtype=MessageType.html,
-    )
-    await fm.send_message(message)
+        logger.warning("Email not sent — MAIL_USERNAME is not configured in .env")
+        return
+    try:
+        fm = FastMail(_conf)
+        message = MessageSchema(
+            subject=subject,
+            recipients=[to],
+            body=html_body,
+            subtype=MessageType.html,
+        )
+        await fm.send_message(message)
+        logger.info("Email sent to %s | subject: %s", to, subject)
+    except Exception as exc:
+        logger.error("Failed to send email to %s | subject: %s | error: %s", to, subject, exc)

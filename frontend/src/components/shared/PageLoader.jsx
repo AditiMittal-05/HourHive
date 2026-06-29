@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { Hexagon } from "lucide-react";
 
 export function PageLoader() {
   return (
@@ -12,7 +11,7 @@ export function PageLoader() {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-6 h-6 rounded-md flex items-center justify-center"
               style={{ background: "linear-gradient(135deg, #2563EB, #10B981)" }}>
-              <Hexagon className="h-3.5 w-3.5 text-white" strokeWidth={1.5} />
+              <span className="text-xs leading-none">🐝</span>
             </div>
           </div>
         </div>

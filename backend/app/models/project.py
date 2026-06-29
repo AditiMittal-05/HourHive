@@ -27,3 +27,7 @@ class Project(Base, AuditMixin):
 
     project_manager = relationship("User", foreign_keys=[project_manager_id], back_populates="managed_projects")
     timesheet_details = relationship("TimesheetDetail", back_populates="project")
+
+    @property
+    def manager_name(self):
+        return self.project_manager.full_name if self.project_manager else None

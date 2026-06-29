@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, FolderKanban, Activity, CheckSquare,
   BarChart3, TrendingUp, ChevronLeft, ClipboardList, Timer,
-  Shield, CalendarDays, GitBranch, UserCog, Hexagon,
+  Shield, CalendarDays, GitBranch, UserCog,
 } from "lucide-react";
 import { cn } from "@/utils/cn";
 import { useAuthStore } from "@/store/auth.store";
@@ -72,7 +72,7 @@ export function Sidebar({ open, onToggle }) {
         <div className="relative flex-shrink-0 w-8 h-8">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #2563EB 0%, #10B981 100%)" }}>
-            <Hexagon className="h-4 w-4 text-white fill-white/20" strokeWidth={1.5} />
+            <span className="text-base leading-none">🐝</span>
           </div>
           <div className="absolute inset-0 rounded-lg opacity-0 group-hover:opacity-100"
             style={{ background: "linear-gradient(135deg, rgba(37,99,235,0.5), rgba(16,185,129,0.5))", filter: "blur(6px)" }} />

@@ -98,8 +98,10 @@ class DashboardService:
         approver_id=None  → super_admin context, shows all data.
         approver_id=<id>  → scopes all queries to the approver's direct reports.
         """
+        import calendar
         today = date.today()
         month_start = today.replace(day=1)
+        last_90 = today - timedelta(days=90)
 
         def ts_query(base_filter):
             q = self.db.query(func.count(TimesheetHeader.id)).filter(
@@ -131,18 +133,41 @@ class DashboardService:
             emp_q = emp_q.filter(User.manager_id == approver_id)
         total_emp = emp_q.scalar() or 0
 
-        # Avg hours per employee (current month)
-        hours_q = self.db.query(
-            func.avg(func.sum(TimesheetDetail.hours_worked))
+        # Avg hours per employee (current month) — use subquery to avoid nested aggregate error
+        _inner = self.db.query(
+            func.sum(TimesheetDetail.hours_worked).label("emp_total")
         ).filter(
             TimesheetDetail.work_date >= month_start,
             TimesheetDetail.is_deleted == False,
         )
         if approver_id is not None:
-            hours_q = hours_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+            _inner = _inner.join(User, TimesheetDetail.employee_id == User.id).filter(
                 User.manager_id == approver_id
             )
-        avg_hours = hours_q.group_by(TimesheetDetail.employee_id).scalar() or Decimal("0")
+        _sub = _inner.group_by(TimesheetDetail.employee_id).subquery()
+        avg_hours = self.db.query(func.avg(_sub.c.emp_total)).scalar() or Decimal("0")
+
+        # Total hours this month
+        tot_q = self.db.query(func.sum(TimesheetDetail.hours_worked)).filter(
+            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.is_deleted == False,
+        )
+        if approver_id is not None:
+            tot_q = tot_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+                User.manager_id == approver_id
+            )
+        total_hours_month = float(tot_q.scalar() or 0)
+
+        # Active projects (have timesheet entries in last 90 days)
+        proj_q = self.db.query(func.count(func.distinct(TimesheetDetail.project_id))).filter(
+            TimesheetDetail.work_date >= last_90,
+            TimesheetDetail.is_deleted == False,
+        )
+        if approver_id is not None:
+            proj_q = proj_q.join(User, TimesheetDetail.employee_id == User.id).filter(
+                User.manager_id == approver_id
+            )
+        active_projects = proj_q.scalar() or 0
 
         kpis = ApproverKPIs(
             pending_approvals=pending,
@@ -151,24 +176,51 @@ class DashboardService:
             missing_timesheets=0,
             total_employees=total_emp,
             avg_hours_per_employee=Decimal(str(round(float(avg_hours), 2))),
+            total_hours_this_month=round(total_hours_month, 1),
+            active_projects=active_projects,
         )
 
-        # Top projects (scoped)
+        # Top projects — last 90 days so seeded data shows up
         top_proj_q = self.db.query(
             Project.project_name,
+            Project.customer_name,
             func.sum(TimesheetDetail.hours_worked).label("total"),
+            func.count(func.distinct(TimesheetDetail.employee_id)).label("emp_count"),
         ).join(TimesheetDetail, Project.id == TimesheetDetail.project_id)\
          .filter(
-            TimesheetDetail.work_date >= month_start,
+            TimesheetDetail.work_date >= last_90,
             TimesheetDetail.is_deleted == False,
         )
         if approver_id is not None:
             top_proj_q = top_proj_q.join(User, TimesheetDetail.employee_id == User.id).filter(
                 User.manager_id == approver_id
             )
-        top_proj_rows = top_proj_q.group_by(Project.project_name)\
-            .order_by(func.sum(TimesheetDetail.hours_worked).desc()).limit(5).all()
-        top_projects = [TopProject(project_name=r.project_name, total_hours=float(r.total)) for r in top_proj_rows]
+        top_proj_rows = top_proj_q.group_by(Project.id, Project.project_name, Project.customer_name)\
+            .order_by(func.sum(TimesheetDetail.hours_worked).desc()).limit(8).all()
+        top_projects = [
+            TopProject(
+                project_name=r.project_name,
+                customer_name=r.customer_name,
+                total_hours=float(r.total),
+                employee_count=int(r.emp_count),
+            ) for r in top_proj_rows
+        ]
+
+        # Department hours — last 90 days
+        dept_q = self.db.query(
+            User.department,
+            func.sum(TimesheetDetail.hours_worked).label("total"),
+        ).join(TimesheetDetail, TimesheetDetail.employee_id == User.id)\
+         .filter(
+            TimesheetDetail.work_date >= last_90,
+            TimesheetDetail.is_deleted == False,
+            User.department.isnot(None),
+        )
+        if approver_id is not None:
+            dept_q = dept_q.filter(User.manager_id == approver_id)
+        dept_rows = dept_q.group_by(User.department)\
+            .order_by(func.sum(TimesheetDetail.hours_worked).desc()).all()
+        dept_hours = [ChartDataPoint(label=r.department, value=float(r.total)) for r in dept_rows]
 
         # Pending queue
         pend_q = self.db.query(TimesheetHeader).filter(
@@ -190,7 +242,7 @@ class DashboardService:
             ) for h in pending_items_rows
         ]
 
-        # Monthly hours chart (last 6 months, scoped)
+        # Monthly hours chart (last 6 months)
         monthly_chart = []
         for i in range(5, -1, -1):
             m = (today.month - i - 1) % 12 + 1
@@ -205,8 +257,9 @@ class DashboardService:
                     User.manager_id == approver_id
                 )
             hrs = hrs_q.scalar() or 0
-            import calendar
             monthly_chart.append(ChartDataPoint(label=f"{calendar.month_abbr[m]} {y}", value=float(hrs)))
 
         return ApproverDashboard(kpis=kpis, top_projects=top_projects,
-                                 pending_approvals=pending_items, monthly_hours_chart=monthly_chart)
+                                 dept_hours=dept_hours,
+                                 pending_approvals=pending_items,
+                                 monthly_hours_chart=monthly_chart)

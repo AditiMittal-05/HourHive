@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Clock, CheckCircle, BarChart3, Shield, Hexagon, Zap } from "lucide-react";
+import { Clock, CheckCircle, BarChart3, Shield, Zap } from "lucide-react";
 
 const features = [
   { icon: Clock,       text: "Real-time time tracking",       sub: "Log hours with precision" },
@@ -48,7 +48,7 @@ export function AuthLayout() {
           <div className="flex items-center gap-3 mb-1">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ background: "linear-gradient(135deg, #2563EB, #10B981)", boxShadow: "0 4px 20px rgba(37,99,235,0.4)" }}>
-              <Hexagon className="h-5 w-5 text-white fill-white/20" strokeWidth={1.5} />
+              <span className="text-xl leading-none">🐝</span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-white tracking-tight">HourHive</h1>
@@ -140,7 +140,7 @@ export function AuthLayout() {
         >
           <div className="w-9 h-9 rounded-xl flex items-center justify-center"
             style={{ background: "linear-gradient(135deg, #2563EB, #10B981)" }}>
-            <Hexagon className="h-5 w-5 text-white" strokeWidth={1.5} />
+            <span className="text-xl leading-none">🐝</span>
           </div>
           <div>
             <h1 className="text-base font-bold text-text-primary">HourHive</h1>

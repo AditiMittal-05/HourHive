@@ -41,7 +41,7 @@ export function ProjectsPage() {
   const [editProject, setEditProject] = useState(null);
   const { toast } = useToast();
   const qc = useQueryClient();
-  const isAdmin = useAuthStore((s) => s.user?.role === "admin");
+  const isAdmin = useAuthStore((s) => s.user?.role === "super_admin" || s.user?.role === "admin");
 
   const { data, isLoading } = useQuery({
     queryKey: ["projects", search, statusFilter, page],

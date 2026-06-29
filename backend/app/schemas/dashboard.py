@@ -11,15 +11,6 @@ class EmployeeKPIs(BaseModel):
     rejected_count: int
 
 
-class ApproverKPIs(BaseModel):
-    pending_approvals: int
-    approved_this_month: int
-    rejected_this_month: int
-    missing_timesheets: int
-    total_employees: int
-    avg_hours_per_employee: Decimal
-
-
 class ChartDataPoint(BaseModel):
     label: str
     value: float
@@ -53,7 +44,9 @@ class EmployeeDashboard(BaseModel):
 
 class TopProject(BaseModel):
     project_name: str
+    customer_name: str
     total_hours: float
+    employee_count: int
 
 
 class PendingItem(BaseModel):
@@ -64,8 +57,20 @@ class PendingItem(BaseModel):
     submitted_at: Optional[str] = None
 
 
+class ApproverKPIs(BaseModel):
+    pending_approvals: int
+    approved_this_month: int
+    rejected_this_month: int
+    missing_timesheets: int
+    total_employees: int
+    avg_hours_per_employee: Decimal
+    total_hours_this_month: float
+    active_projects: int
+
+
 class ApproverDashboard(BaseModel):
     kpis: ApproverKPIs
     top_projects: List[TopProject]
+    dept_hours: List[ChartDataPoint]
     pending_approvals: List[PendingItem]
     monthly_hours_chart: List[ChartDataPoint]
