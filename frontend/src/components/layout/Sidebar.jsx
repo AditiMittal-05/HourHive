@@ -32,7 +32,7 @@ export function Sidebar({ open, onToggle }) {
     ...(isApprover ? [{
       label: "Approvals",
       items: [
-        { label: "Approval Queue", path: "/approvals", icon: CheckSquare },
+        { label: "Team Approvals", path: "/approvals", icon: CheckSquare },
       ],
     }] : []),
     {
@@ -47,7 +47,7 @@ export function Sidebar({ open, onToggle }) {
       items: [
         { label: "User Management", path: "/users", icon: Users },
         { label: "Org Hierarchy", path: "/organization", icon: GitBranch },
-        { label: "Approver Mapping", path: "/approver-mapping", icon: UserCog },
+        { label: "Manager Assignment", path: "/approver-mapping", icon: UserCog },
         { label: "Projects", path: "/projects", icon: FolderKanban },
         { label: "Activities", path: "/activities", icon: Activity },
         { label: "Holiday Management", path: "/holidays", icon: CalendarDays },
@@ -160,7 +160,7 @@ export function Sidebar({ open, onToggle }) {
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-white/90 truncate leading-none">{user?.full_name}</p>
               <p className="text-[10px] text-white/40 font-medium mt-0.5">
-                {isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Approver" : "Employee"}
+                {isSuperAdmin ? "Super Admin" : user?.can_approve_timesheets ? "Manager" : "Employee"}
               </p>
             </div>
             <div className="w-1.5 h-1.5 rounded-full bg-success flex-shrink-0" />

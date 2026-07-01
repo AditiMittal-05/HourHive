@@ -72,7 +72,7 @@ export function OrganizationHierarchyPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <SummaryCard icon={Users} label="Total Employees" value={users.length} color="blue" />
         <SummaryCard icon={GitBranch} label="With Manager" value={users.filter((u) => u.manager_id).length} color="green" />
-        <SummaryCard icon={UserCheck} label="Approvers" value={users.filter((u) => u.can_approve_timesheets).length} color="amber" />
+        <SummaryCard icon={UserCheck} label="Managers" value={users.filter((u) => u.can_approve_timesheets).length} color="amber" />
         <SummaryCard icon={Users} label="No Manager" value={users.filter((u) => !u.manager_id).length} color="red" />
       </div>
 
@@ -158,7 +158,7 @@ export function OrganizationHierarchyPage() {
                         )}
                         {emp.can_approve_timesheets && (
                           <Badge className="text-[10px] ml-1" style={{ background: "rgba(0,200,130,0.14)", color: "#006646" }}>
-                            Approver
+                            Manager
                           </Badge>
                         )}
                       </td>
@@ -212,7 +212,7 @@ export function OrganizationHierarchyPage() {
                       .filter((u) => u.id !== assignModal.id)
                       .map((u) => (
                         <SelectItem key={u.id} value={String(u.id)}>
-                          {u.full_name} {u.can_approve_timesheets ? "· Approver" : ""}
+                          {u.full_name} {u.can_approve_timesheets ? "· Manager" : ""}
                         </SelectItem>
                       ))}
                   </SelectContent>

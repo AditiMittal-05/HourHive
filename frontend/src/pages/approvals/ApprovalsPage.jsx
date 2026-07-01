@@ -83,8 +83,8 @@ export function ApprovalsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary">Approval Workflow</h1>
-          <p className="text-text-secondary text-sm mt-0.5">Review and manage timesheet approvals</p>
+          <h1 className="text-2xl font-bold text-text-primary">Team Timesheets</h1>
+          <p className="text-text-secondary text-sm mt-0.5">Review and approve timesheets submitted by your team members</p>
         </div>
       </div>
 

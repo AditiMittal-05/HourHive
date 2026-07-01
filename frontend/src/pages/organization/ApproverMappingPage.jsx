@@ -49,9 +49,9 @@ export function ApproverMappingPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Approver Mapping</h1>
+          <h1 className="text-2xl font-bold text-text-primary tracking-tight">Manager Assignment</h1>
           <p className="text-text-secondary text-sm mt-0.5">
-            Control which employees can approve their team's timesheets
+            Designate employees as team managers who can approve their team's timesheets
           </p>
         </div>
       </div>
@@ -61,11 +61,11 @@ export function ApproverMappingPage() {
         style={{ background: "rgba(20,87,232,0.04)", borderColor: "rgba(20,87,232,0.16)" }}>
         <Shield className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-semibold text-text-primary">How approver permissions work</p>
+          <p className="text-sm font-semibold text-text-primary">How manager permissions work</p>
           <p className="text-xs text-text-secondary mt-0.5">
-            Employees marked as approvers can approve, reject, and unlock timesheets submitted by their
-            direct reports (employees whose manager is set to them in Org Hierarchy). Super Admin can
-            approve all timesheets regardless of this setting.
+            Employees designated as managers can approve, reject, and unlock timesheets submitted by their
+            direct reports (employees assigned under them in Org Hierarchy). Super Admin can
+            manage all timesheets regardless of this setting.
           </p>
         </div>
       </div>
@@ -73,8 +73,8 @@ export function ApproverMappingPage() {
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <StatCard label="Total Employees" value={users.length} icon={Users} />
-        <StatCard label="Approvers" value={approverCount} icon={CheckCircle} color="green" />
-        <StatCard label="Non-Approvers" value={users.length - approverCount} icon={XCircle} color="slate" />
+        <StatCard label="Managers" value={approverCount} icon={CheckCircle} color="green" />
+        <StatCard label="Regular Employees" value={users.length - approverCount} icon={XCircle} color="slate" />
       </div>
 
       {/* Filters */}
@@ -89,8 +89,8 @@ export function ApproverMappingPage() {
             <div className="flex gap-2">
               {[
                 { key: "all", label: "All" },
-                { key: "approvers", label: "Approvers" },
-                { key: "non-approvers", label: "Non-Approvers" },
+                { key: "approvers", label: "Managers" },
+                { key: "non-approvers", label: "Regular Employees" },
               ].map((f) => (
                 <button
                   key={f.key}
@@ -119,7 +119,7 @@ export function ApproverMappingPage() {
               <table className="enterprise-table w-full">
                 <thead>
                   <tr>
-                    {["Employee", "Department", "Manager", "Direct Reports", "Approver Status", "Action"].map((h) => (
+                    {["Employee", "Department", "Manager", "Direct Reports", "Manager Role", "Action"].map((h) => (
                       <th key={h}>{h}</th>
                     ))}
                   </tr>
@@ -170,7 +170,7 @@ export function ApproverMappingPage() {
                         {emp.can_approve_timesheets ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold"
                             style={{ background: "rgba(0,200,130,0.15)", color: "#006646" }}>
-                            <CheckCircle className="h-3 w-3" /> Approver
+                            <CheckCircle className="h-3 w-3" /> Manager
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-text-secondary/60 bg-light-bg">
@@ -187,9 +187,9 @@ export function ApproverMappingPage() {
                           className="min-w-[110px]"
                         >
                           {emp.can_approve_timesheets ? (
-                            <><XCircle className="h-3.5 w-3.5" /> Remove</>
+                            <><XCircle className="h-3.5 w-3.5" /> Remove Role</>
                           ) : (
-                            <><CheckCircle className="h-3.5 w-3.5" /> Grant</>
+                            <><CheckCircle className="h-3.5 w-3.5" /> Set as Manager</>
                           )}
                         </Button>
                       </td>
@@ -203,7 +203,7 @@ export function ApproverMappingPage() {
                     Showing <span className="font-semibold text-text-primary">{filtered.length}</span> employees
                     {approverCount > 0 && (
                       <span className="ml-2 text-xs" style={{ color: "#006646" }}>
-                        · {approverCount} approver{approverCount !== 1 ? "s" : ""} configured
+                        · {approverCount} manager{approverCount !== 1 ? "s" : ""} configured
                       </span>
                     )}
                   </p>

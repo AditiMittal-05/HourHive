@@ -133,21 +133,6 @@ export function LoginPage() {
         </Button>
       </form>
 
-      {/* Footer */}
-      <div className="mt-8 pt-6 border-t border-border-color space-y-3 text-center">
-        <p className="text-sm text-text-secondary">
-          Don't have an account?{" "}
-          <Link to="/register" className="font-semibold text-primary hover:underline">
-            Create one
-          </Link>
-        </p>
-        <p className="text-xs text-text-secondary/70">
-          Need help? Contact{" "}
-          <a href="mailto:admin@gnxtsystems.com" className="text-primary hover:underline font-medium">
-            your administrator
-          </a>
-        </p>
-      </div>
     </motion.div>
   );
 }

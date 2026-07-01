@@ -144,7 +144,7 @@ export function UsersPage() {
                                 {isProtected && <Shield className="h-3.5 w-3.5" style={{ color: "#D97706" }} />}
                                 {user.can_approve_timesheets && !isProtected && (
                                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "rgba(16,185,129,0.15)", color: "#065F46" }}>
-                                    Approver
+                                    Manager
                                   </span>
                                 )}
                               </p>
